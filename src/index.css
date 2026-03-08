@@ -116,7 +116,10 @@
 }
 
 @media print {
-  .no-print {
+  .no-print,
+  nav, aside, header,
+  [data-sidebar], [data-radix-popper-content-wrapper],
+  .toaster, [data-sonner-toaster] {
     display: none !important;
   }
   .print-only {
@@ -125,5 +128,13 @@
   body {
     background: white !important;
     color: black !important;
+    font-size: 12pt;
+  }
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  #kuitansi-print, #bukti-pengeluaran {
+    display: block !important;
   }
 }
