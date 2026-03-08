@@ -85,8 +85,10 @@ const App = () => (
                 <Route path="/akademik/siswa/:id" element={<DetailSiswa />} />
                 <Route path="/akademik/siswa/:id/edit" element={<FormSiswa />} />
                 <Route path="/akademik/psb" element={<PSB />} />
-                <Route path="/akademik/mutasi" element={<MutasiSiswa />} />
-                <Route path="/akademik/:tab" element={<Akademik />} />
+                <Route path="/akademik/jadwal" element={<JadwalPelajaran />} />
+                <Route path="/akademik/presensi" element={<PresensiSiswa />} />
+                <Route path="/akademik/penilaian" element={<Penilaian />} />
+                <Route path="/akademik/referensi" element={<ReferensiAkademik />} />
                 {/* Keuangan - accessible by kasir */}
                 <Route path="/keuangan" element={<Keuangan />} />
                 <Route path="/keuangan/pembayaran" element={<InputPembayaran />} />
