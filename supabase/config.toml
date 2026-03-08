@@ -1,0 +1,7 @@
+project_id = "jywjiivyvohojveoecat"
+
+[functions.midtrans-notification]
+verify_jwt = false
+
+[functions.create-payment]
+verify_jwt = false

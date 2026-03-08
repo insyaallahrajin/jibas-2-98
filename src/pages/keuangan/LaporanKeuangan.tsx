@@ -1,0 +1,502 @@
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { DataTable, DataTableColumn } from "@/components/shared/DataTable";
+import { ExportButton } from "@/components/shared/ExportButton";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useKelas } from "@/hooks/useAkademikData";
+import { useJenisPembayaran, useRekapKeuanganPerLembaga, useLembaga, formatRupiah, namaBulan, BULAN_NAMES } from "@/hooks/useKeuangan";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { format } from "date-fns";
+import { id as idLocale } from "date-fns/locale";
+import { Building2, CheckCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { useSearchParams } from "react-router-dom";
+import TabLabaRugi from "./TabLabaRugi";
+import TabNeracaAkuntansi from "./TabNeracaAkuntansi";
+import TabArusKas from "./TabArusKas";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
+
+const now = new Date();
+
+export default function LaporanKeuangan() {
+  const [tab, setTab] = useState("penerimaan");
+  const [searchParams] = useSearchParams();
+  const [filterLembagaId, setFilterLembagaId] = useState(searchParams.get("lembaga") || "");
+  const { data: lembagaList } = useLembaga();
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Laporan Keuangan</h1>
+        <p className="text-sm text-muted-foreground">Laporan penerimaan, pengeluaran, dan rekap SPP</p>
+      </div>
+
+      {/* Filter Lembaga Global */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <Building2 className="h-4 w-4 text-muted-foreground" />
+        <Label className="text-sm">Filter Lembaga:</Label>
+        <Select value={filterLembagaId} onValueChange={setFilterLembagaId}>
+          <SelectTrigger className="w-56"><SelectValue placeholder="Semua Lembaga" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Semua Lembaga (Konsolidasi)</SelectItem>
+            {lembagaList?.map((l: any) => (
+              <SelectItem key={l.id} value={l.id}>{l.kode} — {l.nama}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {filterLembagaId && filterLembagaId !== "all" && (
+          <Button variant="ghost" size="sm" onClick={() => setFilterLembagaId("")}>Reset Filter</Button>
+        )}
+      </div>
+
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList className="flex-wrap">
+          <TabsTrigger value="penerimaan">Penerimaan</TabsTrigger>
+          <TabsTrigger value="pengeluaran">Pengeluaran</TabsTrigger>
+          <TabsTrigger value="rekap-spp">Rekap SPP</TabsTrigger>
+          <TabsTrigger value="neraca">Neraca Bulanan</TabsTrigger>
+          <TabsTrigger value="laba-rugi">Laba Rugi</TabsTrigger>
+          <TabsTrigger value="neraca-akuntansi">Neraca</TabsTrigger>
+          <TabsTrigger value="arus-kas">Arus Kas</TabsTrigger>
+          <TabsTrigger value="konsolidasi">Konsolidasi Yayasan</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="penerimaan"><TabPenerimaan departemenId={filterLembagaId && filterLembagaId !== "all" ? filterLembagaId : undefined} /></TabsContent>
+        <TabsContent value="pengeluaran"><TabPengeluaran departemenId={filterLembagaId && filterLembagaId !== "all" ? filterLembagaId : undefined} /></TabsContent>
+        <TabsContent value="rekap-spp"><TabRekapSPP /></TabsContent>
+        <TabsContent value="neraca"><TabNeraca departemenId={filterLembagaId && filterLembagaId !== "all" ? filterLembagaId : undefined} /></TabsContent>
+        <TabsContent value="laba-rugi"><TabLabaRugi /></TabsContent>
+        <TabsContent value="neraca-akuntansi"><TabNeracaAkuntansi /></TabsContent>
+        <TabsContent value="arus-kas"><TabArusKas departemenId={filterLembagaId && filterLembagaId !== "all" ? filterLembagaId : undefined} /></TabsContent>
+        <TabsContent value="konsolidasi"><TabKonsolidasi /></TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+function TabPenerimaan({ departemenId }: { departemenId?: string }) {
+  const [bulan, setBulan] = useState(now.getMonth() + 1);
+  const [tahun, setTahun] = useState(now.getFullYear());
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["laporan_penerimaan", bulan, tahun, departemenId],
+    queryFn: async () => {
+      const start = `${tahun}-${String(bulan).padStart(2, "0")}-01`;
+      const endM = bulan === 12 ? 1 : bulan + 1;
+      const endY = bulan === 12 ? tahun + 1 : tahun;
+      const end = `${endY}-${String(endM).padStart(2, "0")}-01`;
+      let q = supabase
+        .from("pembayaran")
+        .select("*, siswa:siswa_id(nama, nis), jenis_pembayaran:jenis_id(nama, akun_pendapatan_id), departemen:departemen_id(nama, kode), jurnal:jurnal_id(id, nomor)")
+        .gte("tanggal_bayar", start)
+        .lt("tanggal_bayar", end)
+        .order("tanggal_bayar", { ascending: false });
+      if (departemenId) q = q.eq("departemen_id", departemenId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const total = data?.reduce((s, r) => s + Number(r.jumlah || 0), 0) || 0;
+
+  const columns: DataTableColumn<any>[] = [
+    { key: "tanggal_bayar", label: "Tanggal", render: (v) => v ? format(new Date(v as string), "dd MMM yyyy", { locale: idLocale }) : "-" },
+    { key: "siswa_nama", label: "Siswa", render: (_, r) => (r as any).siswa?.nama || "-" },
+    { key: "jenis", label: "Jenis Bayar", render: (_, r) => (r as any).jenis_pembayaran?.nama || "-" },
+    { key: "lembaga", label: "Lembaga", render: (_, r) => (r as any).departemen?.kode || "-" },
+    { key: "jumlah", label: "Jumlah", render: (v) => formatRupiah(Number(v)) },
+    {
+      key: "jurnal", label: "Jurnal",
+      render: (_, r) => {
+        const j = (r as any).jurnal;
+        if (j?.nomor) {
+          return (
+            <Badge
+              className="bg-emerald-500/10 text-emerald-700 border-emerald-500/30 cursor-pointer hover:bg-emerald-500/20"
+              variant="outline"
+            >
+              <CheckCircle className="h-3 w-3 mr-1" />
+              {j.nomor}
+            </Badge>
+          );
+        }
+        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-300">Manual</Badge>;
+      },
+    },
+  ];
+
+  return (
+    <div className="space-y-4 pt-4">
+      <div className="flex gap-3 items-end">
+        <div>
+          <Label>Bulan</Label>
+          <Select value={String(bulan)} onValueChange={(v) => setBulan(Number(v))}>
+            <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+            <SelectContent>{Array.from({ length: 12 }, (_, i) => <SelectItem key={i+1} value={String(i+1)}>{namaBulan(i+1)}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Tahun</Label>
+          <Input type="number" className="w-24" value={tahun} onChange={(e) => setTahun(Number(e.target.value))} />
+        </div>
+      </div>
+      <Card>
+        <CardContent className="pt-6">
+          <DataTable columns={columns} data={data || []} loading={isLoading} exportable exportFilename="laporan-penerimaan" pageSize={20} />
+          {!isLoading && <p className="text-right font-bold mt-4">Total: {formatRupiah(total)}</p>}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function TabPengeluaran({ departemenId }: { departemenId?: string }) {
+  const [bulan, setBulan] = useState(now.getMonth() + 1);
+  const [tahun, setTahun] = useState(now.getFullYear());
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["laporan_pengeluaran_detail", bulan, tahun, departemenId],
+    queryFn: async () => {
+      const start = `${tahun}-${String(bulan).padStart(2, "0")}-01`;
+      const endM = bulan === 12 ? 1 : bulan + 1;
+      const endY = bulan === 12 ? tahun + 1 : tahun;
+      const end = `${endY}-${String(endM).padStart(2, "0")}-01`;
+      let q = supabase
+        .from("pengeluaran" as any)
+        .select("*, jenis_pengeluaran:jenis_id(nama), departemen:departemen_id(nama, kode)")
+        .gte("tanggal", start)
+        .lt("tanggal", end)
+        .order("tanggal", { ascending: false });
+      if (departemenId) q = (q as any).eq("departemen_id", departemenId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+  });
+
+  const total = data?.reduce((s, r) => s + Number(r.jumlah || 0), 0) || 0;
+
+  const columns: DataTableColumn<any>[] = [
+    { key: "tanggal", label: "Tanggal", render: (v) => v ? format(new Date(v as string), "dd MMM yyyy", { locale: idLocale }) : "-" },
+    { key: "jenis", label: "Jenis", render: (_, r) => r.jenis_pengeluaran?.nama || "-" },
+    { key: "lembaga", label: "Lembaga", render: (_, r) => r.departemen?.kode || "-" },
+    { key: "jumlah", label: "Jumlah", render: (v) => formatRupiah(Number(v)) },
+    { key: "keterangan", label: "Keterangan", render: (v) => (v as string) || "-" },
+  ];
+
+  return (
+    <div className="space-y-4 pt-4">
+      <div className="flex gap-3 items-end">
+        <div>
+          <Label>Bulan</Label>
+          <Select value={String(bulan)} onValueChange={(v) => setBulan(Number(v))}>
+            <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+            <SelectContent>{Array.from({ length: 12 }, (_, i) => <SelectItem key={i+1} value={String(i+1)}>{namaBulan(i+1)}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Tahun</Label>
+          <Input type="number" className="w-24" value={tahun} onChange={(e) => setTahun(Number(e.target.value))} />
+        </div>
+      </div>
+      <Card>
+        <CardContent className="pt-6">
+          <DataTable columns={columns} data={data || []} loading={isLoading} exportable exportFilename="laporan-pengeluaran" pageSize={20} />
+          {!isLoading && <p className="text-right font-bold mt-4">Total: {formatRupiah(total)}</p>}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function TabRekapSPP() {
+  const [kelasId, setKelasId] = useState("");
+  const { data: kelasList } = useKelas();
+  const { data: jenisList } = useJenisPembayaran();
+  const jenisId = jenisList?.[0]?.id || "";
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["rekap_spp_kelas", kelasId, jenisId],
+    enabled: !!kelasId && !!jenisId,
+    queryFn: async () => {
+      const { data: siswaList } = await supabase
+        .from("kelas_siswa")
+        .select("siswa_id, siswa:siswa_id(nama, nis)")
+        .eq("kelas_id", kelasId)
+        .eq("aktif", true);
+      if (!siswaList?.length) return [];
+
+      const siswaIds = siswaList.map((s: any) => s.siswa_id);
+      const { data: payments } = await supabase
+        .from("pembayaran")
+        .select("siswa_id, bulan")
+        .eq("jenis_id", jenisId)
+        .in("siswa_id", siswaIds);
+
+      const paidMap = new Map<string, Set<number>>();
+      payments?.forEach((p) => {
+        if (!paidMap.has(p.siswa_id!)) paidMap.set(p.siswa_id!, new Set());
+        paidMap.get(p.siswa_id!)!.add(p.bulan!);
+      });
+
+      return siswaList.map((ks: any) => {
+        const paid = paidMap.get(ks.siswa_id) || new Set();
+        const row: any = { nama: ks.siswa?.nama, nis: ks.siswa?.nis };
+        for (let b = 1; b <= 12; b++) row[`b${b}`] = paid.has(b) ? "✓" : "✗";
+        return row;
+      });
+    },
+  });
+
+  const sppColumns: DataTableColumn<any>[] = [
+    { key: "nis", label: "NIS" },
+    { key: "nama", label: "Nama" },
+    ...Array.from({ length: 12 }, (_, i) => ({
+      key: `b${i + 1}`,
+      label: BULAN_NAMES[i].substring(0, 3),
+      render: (v: unknown) => (
+        <span className={v === "✓" ? "text-success font-bold" : "text-destructive font-bold"}>
+          {v as string}
+        </span>
+      ),
+    })),
+  ];
+
+  return (
+    <div className="space-y-4 pt-4">
+      <div className="flex gap-3 items-end">
+        <div>
+          <Label>Kelas</Label>
+          <Select value={kelasId} onValueChange={setKelasId}>
+            <SelectTrigger className="w-48"><SelectValue placeholder="Pilih kelas" /></SelectTrigger>
+            <SelectContent>
+              {kelasList?.map((k: any) => <SelectItem key={k.id} value={k.id}>{k.nama}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      {kelasId ? (
+        <Card>
+          <CardContent className="pt-6">
+            <DataTable columns={sppColumns} data={data || []} loading={isLoading} exportable exportFilename="rekap-spp" pageSize={50} searchable={false} />
+          </CardContent>
+        </Card>
+      ) : (
+        <p className="text-sm text-muted-foreground text-center py-8">Pilih kelas untuk melihat rekap SPP</p>
+      )}
+    </div>
+  );
+}
+
+function TabNeraca({ departemenId }: { departemenId?: string }) {
+  const [bulan, setBulan] = useState(now.getMonth() + 1);
+  const [tahun, setTahun] = useState(now.getFullYear());
+
+  const { data: penerimaan, isLoading: lP } = useQuery({
+    queryKey: ["neraca_penerimaan", bulan, tahun, departemenId],
+    queryFn: async () => {
+      const start = `${tahun}-${String(bulan).padStart(2, "0")}-01`;
+      const endM = bulan === 12 ? 1 : bulan + 1;
+      const endY = bulan === 12 ? tahun + 1 : tahun;
+      const end = `${endY}-${String(endM).padStart(2, "0")}-01`;
+      let q = supabase
+        .from("pembayaran")
+        .select("jumlah, jenis_pembayaran:jenis_id(nama)")
+        .gte("tanggal_bayar", start)
+        .lt("tanggal_bayar", end);
+      if (departemenId) q = q.eq("departemen_id", departemenId);
+      const { data } = await q;
+      const grouped = new Map<string, number>();
+      data?.forEach((r: any) => {
+        const key = r.jenis_pembayaran?.nama || "Lainnya";
+        grouped.set(key, (grouped.get(key) || 0) + Number(r.jumlah));
+      });
+      return Array.from(grouped, ([nama, total]) => ({ nama, total }));
+    },
+  });
+
+  const { data: pengeluaran, isLoading: lE } = useQuery({
+    queryKey: ["neraca_pengeluaran", bulan, tahun, departemenId],
+    queryFn: async () => {
+      const start = `${tahun}-${String(bulan).padStart(2, "0")}-01`;
+      const endM = bulan === 12 ? 1 : bulan + 1;
+      const endY = bulan === 12 ? tahun + 1 : tahun;
+      const end = `${endY}-${String(endM).padStart(2, "0")}-01`;
+      let q = supabase
+        .from("pengeluaran" as any)
+        .select("jumlah, jenis_pengeluaran:jenis_id(nama)")
+        .gte("tanggal", start)
+        .lt("tanggal", end);
+      if (departemenId) q = (q as any).eq("departemen_id", departemenId);
+      const { data } = await q;
+      const grouped = new Map<string, number>();
+      (data as any[])?.forEach((r: any) => {
+        const key = r.jenis_pengeluaran?.nama || "Lainnya";
+        grouped.set(key, (grouped.get(key) || 0) + Number(r.jumlah));
+      });
+      return Array.from(grouped, ([nama, total]) => ({ nama, total }));
+    },
+  });
+
+  const totalP = penerimaan?.reduce((s, r) => s + r.total, 0) || 0;
+  const totalE = pengeluaran?.reduce((s, r) => s + r.total, 0) || 0;
+  const saldo = totalP - totalE;
+  const loading = lP || lE;
+
+  return (
+    <div className="space-y-4 pt-4">
+      <div className="flex gap-3 items-end">
+        <div>
+          <Label>Bulan</Label>
+          <Select value={String(bulan)} onValueChange={(v) => setBulan(Number(v))}>
+            <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+            <SelectContent>{Array.from({ length: 12 }, (_, i) => <SelectItem key={i+1} value={String(i+1)}>{namaBulan(i+1)}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Tahun</Label>
+          <Input type="number" className="w-24" value={tahun} onChange={(e) => setTahun(Number(e.target.value))} />
+        </div>
+      </div>
+
+      {loading ? <Skeleton className="h-48" /> : (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Card>
+            <CardHeader><CardTitle className="text-success">Penerimaan</CardTitle></CardHeader>
+            <CardContent>
+              {penerimaan?.map((r) => (
+                <div key={r.nama} className="flex justify-between py-1.5 border-b last:border-0">
+                  <span>{r.nama}</span><span className="font-medium">{formatRupiah(r.total)}</span>
+                </div>
+              ))}
+              <div className="flex justify-between pt-3 font-bold border-t mt-2">
+                <span>Total Penerimaan</span><span className="text-success">{formatRupiah(totalP)}</span>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader><CardTitle className="text-destructive">Pengeluaran</CardTitle></CardHeader>
+            <CardContent>
+              {pengeluaran?.map((r) => (
+                <div key={r.nama} className="flex justify-between py-1.5 border-b last:border-0">
+                  <span>{r.nama}</span><span className="font-medium">{formatRupiah(r.total)}</span>
+                </div>
+              ))}
+              <div className="flex justify-between pt-3 font-bold border-t mt-2">
+                <span>Total Pengeluaran</span><span className="text-destructive">{formatRupiah(totalE)}</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex justify-between items-center text-lg">
+            <span className="font-bold">Saldo Akhir</span>
+            <span className={`font-bold text-xl ${saldo >= 0 ? "text-success" : "text-destructive"}`}>
+              {formatRupiah(saldo)}
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function TabKonsolidasi() {
+  const [tahun, setTahun] = useState(new Date().getFullYear());
+  const { data: rekapLembaga, isLoading } = useRekapKeuanganPerLembaga(tahun);
+
+  const totalPemasukan = rekapLembaga?.reduce((s, r) => s + r.totalPemasukan, 0) || 0;
+  const totalPengeluaran = rekapLembaga?.reduce((s, r) => s + r.totalPengeluaran, 0) || 0;
+  const totalSaldo = totalPemasukan - totalPengeluaran;
+
+  const chartData = rekapLembaga?.map((r) => ({
+    name: r.kode || r.lembaga,
+    Pemasukan: r.totalPemasukan,
+    Pengeluaran: r.totalPengeluaran,
+  })) || [];
+
+  return (
+    <div className="space-y-4 pt-4">
+      <div className="flex gap-3 items-end">
+        <div>
+          <Label>Tahun</Label>
+          <Input type="number" className="w-24" value={tahun} onChange={(e) => setTahun(Number(e.target.value))} />
+        </div>
+        <ExportButton data={rekapLembaga || []} filename={`konsolidasi-yayasan-${tahun}`} />
+      </div>
+
+      {isLoading ? <Skeleton className="h-64" /> : (
+        <Card>
+          <CardContent className="pt-6 space-y-6">
+            <div className="text-center">
+              <h2 className="text-lg font-bold">LAPORAN KONSOLIDASI KEUANGAN YAYASAN</h2>
+              <p className="text-sm text-muted-foreground">Periode: Tahun {tahun}</p>
+            </div>
+
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Lembaga</TableHead>
+                  <TableHead className="text-right">Total Pemasukan</TableHead>
+                  <TableHead className="text-right">Total Pengeluaran</TableHead>
+                  <TableHead className="text-right">Saldo</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rekapLembaga?.map((r) => (
+                  <TableRow key={r.departemen_id}>
+                    <TableCell>
+                      <span className="font-medium text-primary">{r.kode}</span>{" "}
+                      {r.lembaga}
+                    </TableCell>
+                    <TableCell className="text-right">{formatRupiah(r.totalPemasukan)}</TableCell>
+                    <TableCell className="text-right">{formatRupiah(r.totalPengeluaran)}</TableCell>
+                    <TableCell className={`text-right font-semibold ${r.saldo >= 0 ? "text-success" : "text-destructive"}`}>
+                      {formatRupiah(r.saldo)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+              <TableFooter>
+                <TableRow className="font-bold">
+                  <TableCell>TOTAL YAYASAN</TableCell>
+                  <TableCell className="text-right">{formatRupiah(totalPemasukan)}</TableCell>
+                  <TableCell className="text-right">{formatRupiah(totalPengeluaran)}</TableCell>
+                  <TableCell className={`text-right ${totalSaldo >= 0 ? "text-success" : "text-destructive"}`}>
+                    {formatRupiah(totalSaldo)}
+                  </TableCell>
+                </TableRow>
+              </TableFooter>
+            </Table>
+
+            {/* Bar chart per lembaga */}
+            <div className="pt-4">
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis tickFormatter={(v) => `${(v / 1_000_000).toFixed(0)}jt`} />
+                  <Tooltip formatter={(v: number) => formatRupiah(v)} />
+                  <Legend />
+                  <Bar dataKey="Pemasukan" fill="hsl(var(--success))" radius={[4,4,0,0]} />
+                  <Bar dataKey="Pengeluaran" fill="hsl(var(--destructive))" radius={[4,4,0,0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}

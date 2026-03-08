@@ -1,0 +1,125 @@
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { AppLayout } from "@/components/layout/AppLayout";
+import ProtectedPortalRoute from "@/components/auth/ProtectedPortalRoute";
+import PortalLayout from "@/components/layout/PortalLayout";
+import Login from "./pages/Login";
+import Unauthorized from "./pages/Unauthorized";
+import Dashboard from "./pages/Dashboard";
+import Akademik from "./pages/Akademik";
+import DaftarSiswa from "./pages/akademik/DaftarSiswa";
+import FormSiswa from "./pages/akademik/FormSiswa";
+import DetailSiswa from "./pages/akademik/DetailSiswa";
+import MutasiSiswa from "./pages/akademik/MutasiSiswa";
+import PSB from "./pages/akademik/PSB";
+import Keuangan from "./pages/Keuangan";
+import InputPembayaran from "./pages/keuangan/InputPembayaran";
+import TunggakanPembayaran from "./pages/keuangan/TunggakanPembayaran";
+import InputPengeluaran from "./pages/keuangan/InputPengeluaran";
+import TabunganSiswa from "./pages/keuangan/TabunganSiswa";
+import LaporanKeuangan from "./pages/keuangan/LaporanKeuangan";
+import ReferensiKeuangan from "./pages/keuangan/ReferensiKeuangan";
+import JurnalUmum from "./pages/keuangan/JurnalUmum";
+import BukuBesar from "./pages/keuangan/BukuBesar";
+import Kepegawaian from "./pages/Kepegawaian";
+import DataPegawai from "./pages/kepegawaian/DataPegawai";
+import PresensiPegawai from "./pages/kepegawaian/PresensiPegawai";
+import CBE from "./pages/CBE";
+import Simtaka from "./pages/Simtaka";
+import Buletin from "./pages/Buletin";
+import Pengaturan from "./pages/Pengaturan";
+import ProfilYayasan from "./pages/pengaturan/ProfilYayasan";
+import ManajemenPengguna from "./pages/pengaturan/ManajemenPengguna";
+import ManajemenOrtu from "./pages/pengaturan/ManajemenOrtu";
+import NotFound from "./pages/NotFound";
+// Portal Orang Tua
+import PortalLogin from "./pages/portal/PortalLogin";
+import PortalDashboard from "./pages/portal/PortalDashboard";
+import PortalTagihan from "./pages/portal/PortalTagihan";
+import PortalCheckout from "./pages/portal/PortalCheckout";
+import PortalRiwayat from "./pages/portal/PortalRiwayat";
+import PortalProfil from "./pages/portal/PortalProfil";
+
+const queryClient = new QueryClient();
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <AuthProvider>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/unauthorized" element={<Unauthorized />} />
+            {/* Portal Orang Tua */}
+            <Route path="/portal/login" element={<PortalLogin />} />
+            <Route element={<ProtectedPortalRoute />}>
+              <Route element={<PortalLayout />}>
+                <Route path="/portal" element={<PortalDashboard />} />
+                <Route path="/portal/tagihan" element={<PortalTagihan />} />
+                <Route path="/portal/checkout" element={<PortalCheckout />} />
+                <Route path="/portal/pembayaran" element={<PortalRiwayat />} />
+                <Route path="/portal/profil" element={<PortalProfil />} />
+              </Route>
+            </Route>
+            {/* Admin */}
+            <Route element={<ProtectedRoute />}>
+              <Route element={<AppLayout />}>
+                <Route path="/" element={<Dashboard />} />
+                {/* Akademik */}
+                <Route path="/akademik" element={<Akademik />} />
+                <Route path="/akademik/siswa" element={<DaftarSiswa />} />
+                <Route path="/akademik/siswa/tambah" element={<FormSiswa />} />
+                <Route path="/akademik/siswa/:id" element={<DetailSiswa />} />
+                <Route path="/akademik/siswa/:id/edit" element={<FormSiswa />} />
+                <Route path="/akademik/psb" element={<PSB />} />
+                <Route path="/akademik/mutasi" element={<MutasiSiswa />} />
+                <Route path="/akademik/:tab" element={<Akademik />} />
+                {/* Keuangan - accessible by kasir */}
+                <Route path="/keuangan" element={<Keuangan />} />
+                <Route path="/keuangan/pembayaran" element={<InputPembayaran />} />
+                <Route path="/keuangan/tunggakan" element={<TunggakanPembayaran />} />
+                {/* Keuangan - NOT accessible by kasir */}
+                <Route element={<ProtectedRoute allowedRoles={["admin", "kepala_sekolah", "keuangan"]} />}>
+                  <Route path="/keuangan/pengeluaran" element={<InputPengeluaran />} />
+                  <Route path="/keuangan/tabungan" element={<TabunganSiswa />} />
+                  <Route path="/keuangan/laporan" element={<LaporanKeuangan />} />
+                  <Route path="/keuangan/referensi" element={<ReferensiKeuangan />} />
+                  <Route path="/keuangan/jurnal" element={<JurnalUmum />} />
+                  <Route path="/keuangan/buku-besar" element={<BukuBesar />} />
+                </Route>
+                {/* Kepegawaian */}
+                <Route path="/kepegawaian" element={<Kepegawaian />} />
+                <Route path="/kepegawaian/pegawai" element={<DataPegawai />} />
+                <Route path="/kepegawaian/presensi" element={<PresensiPegawai />} />
+                {/* CBE */}
+                <Route path="/cbe" element={<CBE />} />
+                <Route path="/cbe/:tab" element={<CBE />} />
+                {/* SIMTAKA */}
+                <Route path="/simtaka" element={<Simtaka />} />
+                <Route path="/simtaka/:tab" element={<Simtaka />} />
+                {/* Buletin */}
+                <Route path="/buletin" element={<Buletin />} />
+                {/* Pengaturan */}
+                <Route path="/pengaturan" element={<Pengaturan />} />
+                <Route path="/pengaturan/sekolah" element={<ProfilYayasan />} />
+                <Route path="/pengaturan/pengguna" element={<ManajemenPengguna />} />
+                <Route path="/pengaturan/ortu" element={<ManajemenOrtu />} />
+                <Route path="/pengaturan/:tab" element={<Pengaturan />} />
+              </Route>
+            </Route>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
+      </BrowserRouter>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
+
+export default App;

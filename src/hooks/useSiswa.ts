@@ -1,0 +1,192 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+export interface SiswaWithRelations {
+  id: string;
+  nis: string | null;
+  nama: string;
+  jenis_kelamin: string | null;
+  tempat_lahir: string | null;
+  tanggal_lahir: string | null;
+  agama: string | null;
+  alamat: string | null;
+  telepon: string | null;
+  email: string | null;
+  foto_url: string | null;
+  status: string | null;
+  angkatan_id: string | null;
+  created_at: string | null;
+  angkatan?: { id: string; nama: string } | null;
+  kelas_siswa?: {
+    id: string;
+    aktif: boolean | null;
+    kelas: { id: string; nama: string; tingkat: { id: string; nama: string } | null; departemen: { id: string; nama: string } | null } | null;
+    tahun_ajaran: { id: string; nama: string } | null;
+  }[];
+}
+
+export function useSiswaList() {
+  return useQuery({
+    queryKey: ["siswa"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("siswa")
+        .select(`
+          *,
+          angkatan:angkatan_id(id, nama),
+          kelas_siswa(
+            id, aktif,
+            kelas:kelas_id(id, nama, tingkat:tingkat_id(id, nama), departemen:departemen_id(id, nama)),
+            tahun_ajaran:tahun_ajaran_id(id, nama)
+          )
+        `)
+        .order("nama");
+      if (error) throw error;
+      return data as SiswaWithRelations[];
+    },
+  });
+}
+
+export function useSiswaDetail(id: string) {
+  return useQuery({
+    queryKey: ["siswa", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("siswa")
+        .select(`
+          *,
+          angkatan:angkatan_id(id, nama),
+          kelas_siswa(
+            id, aktif,
+            kelas:kelas_id(id, nama, tingkat:tingkat_id(id, nama), departemen:departemen_id(id, nama)),
+            tahun_ajaran:tahun_ajaran_id(id, nama)
+          )
+        `)
+        .eq("id", id)
+        .single();
+      if (error) throw error;
+      return data as SiswaWithRelations;
+    },
+    enabled: !!id,
+  });
+}
+
+export function useSiswaDetailOrangtua(siswaId: string) {
+  return useQuery({
+    queryKey: ["siswa_detail", siswaId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("siswa_detail")
+        .select("*")
+        .eq("siswa_id", siswaId)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!siswaId,
+  });
+}
+
+export function useCreateSiswa() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (values: {
+      siswa: Record<string, unknown>;
+      detail?: Record<string, unknown>;
+      kelas_siswa?: Record<string, unknown>;
+    }) => {
+      const { data: siswa, error: siswaErr } = await supabase
+        .from("siswa")
+        .insert(values.siswa as any)
+        .select()
+        .single();
+      if (siswaErr) throw siswaErr;
+
+      if (values.detail) {
+        const { error: detailErr } = await supabase
+          .from("siswa_detail")
+          .insert({ ...values.detail, siswa_id: siswa.id } as any);
+        if (detailErr) throw detailErr;
+      }
+
+      if (values.kelas_siswa) {
+        const { error: kelasErr } = await supabase
+          .from("kelas_siswa")
+          .insert({ ...values.kelas_siswa, siswa_id: siswa.id } as any);
+        if (kelasErr) throw kelasErr;
+      }
+
+      return siswa;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["siswa"] });
+      toast.success("Siswa berhasil ditambahkan");
+    },
+    onError: (err: Error) => {
+      toast.error("Gagal menambah siswa: " + err.message);
+    },
+  });
+}
+
+export function useUpdateSiswa() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (values: {
+      id: string;
+      siswa: Record<string, unknown>;
+      detail?: Record<string, unknown>;
+    }) => {
+      const { error: siswaErr } = await supabase
+        .from("siswa")
+        .update(values.siswa as any)
+        .eq("id", values.id);
+      if (siswaErr) throw siswaErr;
+
+      if (values.detail) {
+        const { data: existing } = await supabase
+          .from("siswa_detail")
+          .select("id")
+          .eq("siswa_id", values.id)
+          .maybeSingle();
+
+        if (existing) {
+          const { error } = await supabase
+            .from("siswa_detail")
+            .update(values.detail as any)
+            .eq("siswa_id", values.id);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from("siswa_detail")
+            .insert({ ...values.detail, siswa_id: values.id } as any);
+          if (error) throw error;
+        }
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["siswa"] });
+      toast.success("Data siswa berhasil diperbarui");
+    },
+    onError: (err: Error) => {
+      toast.error("Gagal memperbarui data: " + err.message);
+    },
+  });
+}
+
+export function useDeleteSiswa() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("siswa").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["siswa"] });
+      toast.success("Siswa berhasil dihapus");
+    },
+    onError: (err: Error) => {
+      toast.error("Gagal menghapus siswa: " + err.message);
+    },
+  });
+}
