@@ -78,7 +78,6 @@ function InputNilai() {
   });
 
   const summary = useMemo(() => {
-    const vals = Object.values(nilaiMap).map((v) => Number(v.nilai)).filter((n) => !isNaN(n) && v => true);
     const numbers = Object.values(nilaiMap).map((v) => Number(v.nilai)).filter((n) => !isNaN(n) && n > 0);
     const avg = numbers.length ? numbers.reduce((s, n) => s + n, 0) / numbers.length : 0;
     const max = numbers.length ? Math.max(...numbers) : 0;
