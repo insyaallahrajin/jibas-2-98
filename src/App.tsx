@@ -33,6 +33,8 @@ import CBE from "./pages/CBE";
 import Simtaka from "./pages/Simtaka";
 import Buletin from "./pages/Buletin";
 import Pengaturan from "./pages/Pengaturan";
+import DetailPegawai from "./pages/kepegawaian/DetailPegawai";
+import LaporanBayarSiswa from "./pages/keuangan/LaporanBayarSiswa";
 import ProfilYayasan from "./pages/pengaturan/ProfilYayasan";
 import ManajemenPengguna from "./pages/pengaturan/ManajemenPengguna";
 import ManajemenOrtu from "./pages/pengaturan/ManajemenOrtu";
@@ -90,6 +92,7 @@ const App = () => (
                   <Route path="/keuangan/pengeluaran" element={<InputPengeluaran />} />
                   <Route path="/keuangan/tabungan" element={<TabunganSiswa />} />
                   <Route path="/keuangan/laporan" element={<LaporanKeuangan />} />
+                  <Route path="/keuangan/laporan-siswa" element={<LaporanBayarSiswa />} />
                   <Route path="/keuangan/referensi" element={<ReferensiKeuangan />} />
                   <Route path="/keuangan/jurnal" element={<JurnalUmum />} />
                   <Route path="/keuangan/buku-besar" element={<BukuBesar />} />
@@ -97,6 +100,7 @@ const App = () => (
                 {/* Kepegawaian */}
                 <Route path="/kepegawaian" element={<Kepegawaian />} />
                 <Route path="/kepegawaian/pegawai" element={<DataPegawai />} />
+                <Route path="/kepegawaian/pegawai/:id" element={<DetailPegawai />} />
                 <Route path="/kepegawaian/presensi" element={<PresensiPegawai />} />
                 {/* CBE */}
                 <Route path="/cbe" element={<CBE />} />

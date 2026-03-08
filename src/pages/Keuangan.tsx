@@ -19,6 +19,7 @@ const links = [
   { label: "Jurnal Umum", url: "/keuangan/jurnal" },
   { label: "Buku Besar", url: "/keuangan/buku-besar" },
   { label: "Laporan Keuangan", url: "/keuangan/laporan" },
+  { label: "Laporan Per Siswa", url: "/keuangan/laporan-siswa" },
   { label: "Referensi", url: "/keuangan/referensi" },
 ];
 

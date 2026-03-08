@@ -16,7 +16,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { StatsCard } from "@/components/shared/StatsCard";
 import { DataTable, DataTableColumn } from "@/components/shared/DataTable";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
-import { Plus, Pencil, Trash2, Users, UserCheck, GraduationCap, Briefcase } from "lucide-react";
+import { Plus, Pencil, Trash2, Users, UserCheck, GraduationCap, Briefcase, Eye } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const AGAMA_OPTIONS = ["Islam", "Kristen", "Katolik", "Hindu", "Buddha", "Konghucu"];
 
@@ -41,6 +42,7 @@ type PegawaiRow = Record<string, unknown> & {
 
 export default function DataPegawai() {
   const { role } = useAuth();
+  const navigate = useNavigate();
   const qc = useQueryClient();
   const canEdit = role === "admin" || role === "kepala_sekolah";
   const canDelete = role === "admin";
@@ -206,23 +208,26 @@ export default function DataPegawai() {
     },
   ];
 
-  if (canEdit) {
-    columns.push({
-      key: "_aksi", label: "Aksi",
-      render: (_v, row) => (
-        <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+  columns.push({
+    key: "_aksi", label: "Aksi",
+    render: (_v, row) => (
+      <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(`/kepegawaian/pegawai/${row.id}`)}>
+          <Eye className="h-4 w-4" />
+        </Button>
+        {canEdit && (
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(row)}>
             <Pencil className="h-4 w-4" />
           </Button>
-          {canDelete && (
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setDeleteId(row.id)}>
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
-      ),
-    });
-  }
+        )}
+        {canDelete && (
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setDeleteId(row.id)}>
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+    ),
+  });
 
   return (
     <div className="space-y-6 animate-fade-in">
