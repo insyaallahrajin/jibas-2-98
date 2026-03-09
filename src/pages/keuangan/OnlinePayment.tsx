@@ -282,12 +282,12 @@ export default function OnlinePayment() {
               </div>
 
               {/* Jurnal info from metadata */}
-              {detailData.tx.metadata?.jurnal_nomor && (
+              {detailData.tx.metadata && typeof detailData.tx.metadata === "object" && !Array.isArray(detailData.tx.metadata) && (detailData.tx.metadata as any).jurnal_nomor && (
                 <Card className="bg-muted/50">
                   <CardContent className="p-3 flex items-center gap-3">
                     <Banknote className="h-5 w-5 text-primary shrink-0" />
                     <div className="text-sm">
-                      <p className="font-medium">Auto-Jurnal: {detailData.tx.metadata.jurnal_nomor}</p>
+                      <p className="font-medium">Auto-Jurnal: {(detailData.tx.metadata as any).jurnal_nomor}</p>
                       <p className="text-muted-foreground text-xs">Jurnal akuntansi otomatis telah dibuat untuk transaksi ini</p>
                     </div>
                   </CardContent>
