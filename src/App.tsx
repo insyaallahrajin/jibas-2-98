@@ -51,6 +51,7 @@ import TutupBuku from "./pages/keuangan/TutupBuku";
 import LaporanPengeluaran from "./pages/keuangan/LaporanPengeluaran";
 import LaporanPenerimaanLain from "./pages/keuangan/LaporanPenerimaanLain";
 import AuditTrail from "./pages/keuangan/AuditTrail";
+import OnlinePayment from "./pages/keuangan/OnlinePayment";
 import ProfilYayasan from "./pages/pengaturan/ProfilYayasan";
 import ManajemenPengguna from "./pages/pengaturan/ManajemenPengguna";
 import ManajemenOrtu from "./pages/pengaturan/ManajemenOrtu";
@@ -136,6 +137,7 @@ const App = () => (
                   <Route path="/keuangan/buku-besar" element={<BukuBesar />} />
                   <Route path="/keuangan/laporan-pengeluaran" element={<LaporanPengeluaran />} />
                   <Route path="/keuangan/penerimaan-lain" element={<LaporanPenerimaanLain />} />
+                  <Route path="/keuangan/online-payment" element={<OnlinePayment />} />
                   <Route path="/keuangan/audit-trail" element={<AuditTrail />} />
                 </Route>
                 {/* Kepegawaian */}

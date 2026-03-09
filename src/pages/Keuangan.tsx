@@ -24,6 +24,7 @@ const links = [
   { label: "Lap. Pengeluaran", url: "/keuangan/laporan-pengeluaran" },
   { label: "Penerimaan Lain", url: "/keuangan/penerimaan-lain" },
   { label: "Rekap Harian", url: "/keuangan/rekap-harian" },
+  { label: "Online Payment", url: "/keuangan/online-payment" },
   { label: "Audit Trail", url: "/keuangan/audit-trail" },
   { label: "Pembayaran PSB", url: "/keuangan/pembayaran-psb" },
   { label: "Referensi", url: "/keuangan/referensi" },

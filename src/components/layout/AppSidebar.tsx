@@ -67,6 +67,7 @@ const menuItems: MenuItem[] = [
       { title: "Lap. Pengeluaran", url: "/keuangan/laporan-pengeluaran", roles: ["admin", "kepala_sekolah", "keuangan"] },
       { title: "Penerimaan Lain", url: "/keuangan/penerimaan-lain", roles: ["admin", "kepala_sekolah", "keuangan"] },
       { title: "Laporan Keuangan", url: "/keuangan/laporan", roles: ["admin", "kepala_sekolah", "keuangan"] },
+      { title: "Online Payment", url: "/keuangan/online-payment", roles: ["admin", "kepala_sekolah", "keuangan"] },
       { title: "Audit Trail", url: "/keuangan/audit-trail", roles: ["admin", "kepala_sekolah", "keuangan"] },
       { title: "Referensi", url: "/keuangan/referensi", roles: ["admin", "kepala_sekolah", "keuangan"] },
       { title: "Tutup Buku", url: "/keuangan/tutup-buku", roles: ["admin", "kepala_sekolah", "keuangan"] },
