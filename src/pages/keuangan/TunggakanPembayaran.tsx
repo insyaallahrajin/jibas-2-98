@@ -268,28 +268,32 @@ export default function TunggakanPembayaran() {
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label>Bulan Dari</Label>
-              <Select value={bulanDari} onValueChange={setBulanDari}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: 12 }, (_, i) => (
-                    <SelectItem key={i + 1} value={String(i + 1)}>{namaBulan(i + 1)}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Bulan Sampai</Label>
-              <Select value={bulanSampai} onValueChange={setBulanSampai}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: 12 }, (_, i) => (
-                    <SelectItem key={i + 1} value={String(i + 1)}>{namaBulan(i + 1)}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {!isSekaliBayar && (
+              <>
+                <div>
+                  <Label>Bulan Dari</Label>
+                  <Select value={bulanDari} onValueChange={setBulanDari}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 12 }, (_, i) => (
+                        <SelectItem key={i + 1} value={String(i + 1)}>{namaBulan(i + 1)}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Bulan Sampai</Label>
+                  <Select value={bulanSampai} onValueChange={setBulanSampai}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 12 }, (_, i) => (
+                        <SelectItem key={i + 1} value={String(i + 1)}>{namaBulan(i + 1)}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
           </div>
         </CardContent>
       </Card>
