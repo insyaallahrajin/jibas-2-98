@@ -38,7 +38,7 @@ export default function LaporanBayarSiswa() {
     queryKey: ["laporan_bayar_siswa", selectedSiswa?.id, filterTaId],
     enabled: !!selectedSiswa,
     queryFn: async () => {
-      let q = supabase.from("pembayaran").select("*, jenis_pembayaran:jenis_id(nama), tahun_ajaran:tahun_ajaran_id(nama)").eq("siswa_id", selectedSiswa.id).order("tanggal_bayar", { ascending: false });
+      let q = supabase.from("pembayaran").select("*, jenis_pembayaran:jenis_id(nama, tipe), tahun_ajaran:tahun_ajaran_id(nama)").eq("siswa_id", selectedSiswa.id).order("tanggal_bayar", { ascending: false });
       if (filterTaId && filterTaId !== "all") q = q.eq("tahun_ajaran_id", filterTaId);
       const { data, error } = await q;
       if (error) throw error;
@@ -54,7 +54,11 @@ export default function LaporanBayarSiswa() {
   const columns: DataTableColumn<any>[] = [
     { key: "tanggal_bayar", label: "Tanggal", render: v => v ? format(new Date(v as string), "dd MMM yyyy", { locale: idLocale }) : "-" },
     { key: "jenis", label: "Jenis", render: (_, r) => r.jenis_pembayaran?.nama || "-" },
-    { key: "bulan", label: "Bulan", render: v => namaBulan(v as number) },
+    { key: "bulan", label: "Bulan", render: (v, r) => {
+      const tipe = (r as any).jenis_pembayaran?.tipe;
+      if (tipe === "sekali" || v === 0) return "Sekali Bayar";
+      return namaBulan(v as number);
+    }},
     { key: "ta", label: "Tahun Ajaran", render: (_, r) => r.tahun_ajaran?.nama || "-" },
     { key: "jumlah", label: "Jumlah", render: v => formatRupiah(Number(v)) },
   ];

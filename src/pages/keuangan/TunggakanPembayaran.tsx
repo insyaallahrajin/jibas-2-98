@@ -216,9 +216,9 @@ export default function TunggakanPembayaran() {
     { key: "nis", label: "NIS", sortable: true },
     { key: "nama", label: "Nama Siswa", sortable: true },
     { key: "kelas", label: "Kelas" },
-    { key: "bulan_tunggak", label: "Bulan Tunggak" },
-    { key: "jumlah_bulan", label: "Jml Bulan" },
-    { key: "total", label: "Total Tunggakan", render: (v) => formatRupiah(Number(v)) },
+    { key: "bulan_tunggak", label: isSekaliBayar ? "Tipe" : "Bulan Tunggak" },
+    ...(!isSekaliBayar ? [{ key: "jumlah_bulan", label: "Jml Bulan" }] : []),
+    { key: "total", label: "Total Tunggakan", render: (v: unknown) => formatRupiah(Number(v)) },
   ];
 
   return (
