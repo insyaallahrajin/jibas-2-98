@@ -244,6 +244,24 @@ export default function Buletin() {
               <div><Label>Tanggal Kadaluarsa</Label><Input type="date" value={form.tanggal_kadaluarsa} onChange={e => setForm({ ...form, tanggal_kadaluarsa: e.target.value })} /></div>
             </div>
             <div className="flex items-center gap-2"><Switch checked={form.penting} onCheckedChange={v => setForm({ ...form, penting: v })} /><Label>Tandai sebagai Penting</Label></div>
+            <div>
+              <Label>Lampiran File</Label>
+              <div className="flex items-center gap-2 mt-1">
+                <input ref={fileInputRef} type="file" className="hidden" onChange={e => setSelectedFile(e.target.files?.[0] || null)} />
+                <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                  <Paperclip className="h-4 w-4 mr-1" />Pilih File
+                </Button>
+                {selectedFile && (
+                  <div className="flex items-center gap-1 text-sm">
+                    <span className="text-muted-foreground">{selectedFile.name}</span>
+                    <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => { setSelectedFile(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}><X className="h-3 w-3" /></Button>
+                  </div>
+                )}
+                {!selectedFile && form.lampiran_nama && (
+                  <span className="text-xs text-muted-foreground">File saat ini: {form.lampiran_nama}</span>
+                )}
+              </div>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Batal</Button>
