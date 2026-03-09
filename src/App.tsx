@@ -146,8 +146,10 @@ const App = () => (
                 <Route path="/kepegawaian" element={<Kepegawaian />} />
                 <Route path="/kepegawaian/pegawai" element={<DataPegawai />} />
                 <Route path="/kepegawaian/pegawai/:id" element={<DetailPegawai />} />
+                <Route path="/kepegawaian/pegawai/:id/biodata" element={<CetakBiodata />} />
                 <Route path="/kepegawaian/presensi" element={<PresensiPegawai />} />
                 <Route path="/kepegawaian/jadwal" element={<JadwalPegawai />} />
+                <Route path="/kepegawaian/duk" element={<DUK />} />
                 <Route path="/kepegawaian/statistik" element={<StatistikPegawai />} />
                 {/* CBE */}
                 <Route path="/cbe" element={<CBE />} />
