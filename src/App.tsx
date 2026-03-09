@@ -125,6 +125,11 @@ const App = () => (
                 <Route path="/akademik/rapor" element={<CetakRapor />} />
                 <Route path="/akademik/legger" element={<LeggerNilai />} />
                 <Route path="/akademik/kalender" element={<KalenderAkademik />} />
+                <Route path="/akademik/presensi-kbm" element={<PresensiKBM />} />
+                <Route path="/akademik/komentar-rapor" element={<KomentarRapor />} />
+                <Route path="/akademik/rpp" element={<RPP />} />
+                <Route path="/akademik/statistik" element={<StatistikSiswa />} />
+                <Route path="/akademik/alumni" element={<DataAlumni />} />
                 {/* Keuangan - accessible by kasir */}
                 <Route path="/keuangan" element={<Keuangan />} />
                 <Route path="/keuangan/pembayaran" element={<InputPembayaran />} />
