@@ -73,6 +73,9 @@ export default function Kepegawaian() {
         <Button variant="outline" size="sm" onClick={() => navigate("/kepegawaian/presensi")}>
           <ClipboardList className="h-4 w-4 mr-2" />Presensi
         </Button>
+        <Button variant="outline" size="sm" onClick={() => navigate("/kepegawaian/duk")}>
+          <ListOrdered className="h-4 w-4 mr-2" />DUK
+        </Button>
       </div>
 
       {/* Global Stats */}
