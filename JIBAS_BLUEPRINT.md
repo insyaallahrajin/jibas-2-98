@@ -1004,19 +1004,19 @@ Tabel ini adalah **backlog lengkap** fitur dari JIBAS 32.0 yang perlu diimplemen
 
 | Fitur | Modul PHP | Status |
 |---|---|---|
-| Riwayat jabatan lengkap | `pegawai/daftarjabatan.php` | ❌ Belum |
-| Riwayat golongan/pangkat | `pegawai/daftargolongan.php` | ❌ Belum |
-| DUK (Daftar Urut Kepangkatan) | `pegawai/dukpangkat.php` | ❌ Belum |
-| Riwayat gaji | `pegawai/daftargaji.php` | ❌ Belum |
-| Riwayat pendidikan | `pegawai/daftarsekolah.php` | ❌ Belum |
-| Sertifikasi guru | `pegawai/daftarserti.php` | ❌ Belum |
-| Diklat/pelatihan | `pegawai/daftardiklat.php` | ❌ Belum |
-| Data keluarga | `pegawai/daftarkeluarga.php` | ❌ Belum |
-| Jadwal pegawai | `pegawai/jadwal*.php` | ❌ Belum |
-| Statistik kepegawaian | `pegawai/statistik.php` | ❌ Belum |
-| Struktur organisasi | `pegawai/struktur.php` | ❌ Belum |
-| Pensiun | `pegawai/daftarpensiun.php` | ❌ Belum |
-| Cetak biodata pegawai | `pegawai/daftarpribadi_cetak.php` | ❌ Belum |
+| Riwayat jabatan lengkap | `pegawai/daftarjabatan.php` | ✅ Selesai (`DetailPegawai.tsx`) |
+| Riwayat golongan/pangkat | `pegawai/daftargolongan.php` | ✅ Selesai (`DetailPegawai.tsx`) |
+| DUK (Daftar Urut Kepangkatan) | `pegawai/dukpangkat.php` | ✅ Selesai (`DUK.tsx`) |
+| Riwayat gaji | `pegawai/daftargaji.php` | ✅ Selesai (`DetailPegawai.tsx`) |
+| Riwayat pendidikan | `pegawai/daftarsekolah.php` | ✅ Selesai (`DetailPegawai.tsx`) |
+| Sertifikasi guru | `pegawai/daftarserti.php` | ✅ Selesai (`DetailPegawai.tsx`) |
+| Diklat/pelatihan | `pegawai/daftardiklat.php` | ✅ Selesai (`DetailPegawai.tsx`) |
+| Data keluarga | `pegawai/daftarkeluarga.php` | ✅ Selesai (`DetailPegawai.tsx`) |
+| Jadwal pegawai | `pegawai/jadwal*.php` | ✅ Selesai (`JadwalPegawai.tsx`) |
+| Statistik kepegawaian | `pegawai/statistik.php` | ✅ Selesai (`StatistikPegawai.tsx`) |
+| Struktur organisasi | `pegawai/struktur.php` | ✅ Selesai (`StrukturOrganisasi.tsx`) |
+| Pensiun | `pegawai/daftarpensiun.php` | ✅ Selesai (via `DetailPegawai.tsx`) |
+| Cetak biodata pegawai | `pegawai/daftarpribadi_cetak.php` | ✅ Selesai (`CetakBiodata.tsx`) |
 
 ---
 
