@@ -55,10 +55,12 @@ export default function InputPembayaran() {
     },
   });
 
-  // Auto-detect tunggakan: cek bulan yang sudah dibayar
+  const isSekali = selectedJenis?.tipe === "sekali";
+
+  // Auto-detect tunggakan: cek bulan yang sudah dibayar (untuk tipe bulanan)
   const { data: bulanDibayar } = useQuery({
     queryKey: ["cek_tunggakan", selectedSiswa?.id, jenisId],
-    enabled: !!selectedSiswa && !!jenisId,
+    enabled: !!selectedSiswa && !!jenisId && !isSekali,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("pembayaran")
@@ -67,6 +69,22 @@ export default function InputPembayaran() {
         .eq("jenis_id", jenisId);
       if (error) throw error;
       return new Set((data || []).map((r) => r.bulan));
+    },
+  });
+
+  // Cek status pembayaran sekali bayar
+  const { data: pembayaranSekali } = useQuery({
+    queryKey: ["cek_sekali", selectedSiswa?.id, jenisId],
+    enabled: !!selectedSiswa && !!jenisId && isSekali,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pembayaran")
+        .select("jumlah")
+        .eq("siswa_id", selectedSiswa.id)
+        .eq("jenis_id", jenisId);
+      if (error) throw error;
+      const totalBayar = (data || []).reduce((sum, r) => sum + (Number(r.jumlah) || 0), 0);
+      return { totalBayar, lunas: totalBayar >= (Number(selectedJenis?.nominal) || 0) };
     },
   });
 
