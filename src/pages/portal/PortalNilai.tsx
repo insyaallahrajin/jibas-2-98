@@ -88,7 +88,7 @@ export default function PortalNilai() {
           <CardContent className="p-4">
             <p className="font-semibold">{siswaInfo.nama}</p>
             <p className="text-sm text-muted-foreground">
-              NIS: {siswaInfo.nis || "-"} • {activeKelas?.kelas?.departemen?.nama || "-"} — {activeKelas?.kelas?.nama || "-"}
+              NIS: {siswaInfo.nis || "-"}
             </p>
           </CardContent>
         </Card>
