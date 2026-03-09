@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatsCard } from "@/components/shared/StatsCard";
-import { Users, UserCheck, Building2, ClipboardList } from "lucide-react";
+import { Users, UserCheck, Building2, ClipboardList, Award, ListOrdered } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -72,6 +72,9 @@ export default function Kepegawaian() {
         </Button>
         <Button variant="outline" size="sm" onClick={() => navigate("/kepegawaian/presensi")}>
           <ClipboardList className="h-4 w-4 mr-2" />Presensi
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => navigate("/kepegawaian/duk")}>
+          <ListOrdered className="h-4 w-4 mr-2" />DUK
         </Button>
       </div>
 
