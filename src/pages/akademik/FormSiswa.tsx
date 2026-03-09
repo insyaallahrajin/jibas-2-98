@@ -130,7 +130,10 @@ export default function FormSiswa() {
     };
 
     if (isEdit) {
-      await updateSiswa.mutateAsync({ id: id!, siswa: siswaData, detail: detailData });
+      const kelasData = values.kelas_id && values.tahun_ajaran_id
+        ? { kelas_id: values.kelas_id, tahun_ajaran_id: values.tahun_ajaran_id }
+        : undefined;
+      await updateSiswa.mutateAsync({ id: id!, siswa: siswaData, detail: detailData, kelas_siswa: kelasData });
       navigate(`/akademik/siswa/${id}`);
     } else {
       const kelasData = values.kelas_id && values.tahun_ajaran_id

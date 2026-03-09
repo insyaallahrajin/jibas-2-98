@@ -136,6 +136,7 @@ export function useUpdateSiswa() {
       id: string;
       siswa: Record<string, unknown>;
       detail?: Record<string, unknown>;
+      kelas_siswa?: { kelas_id: string; tahun_ajaran_id: string };
     }) => {
       const { error: siswaErr } = await supabase
         .from("siswa")
@@ -160,6 +161,43 @@ export function useUpdateSiswa() {
           const { error } = await supabase
             .from("siswa_detail")
             .insert({ ...values.detail, siswa_id: values.id } as any);
+          if (error) throw error;
+        }
+      }
+
+      // Update kelas_siswa assignment
+      if (values.kelas_siswa?.kelas_id && values.kelas_siswa?.tahun_ajaran_id) {
+        // Deactivate existing active assignments
+        await supabase
+          .from("kelas_siswa")
+          .update({ aktif: false } as any)
+          .eq("siswa_id", values.id)
+          .eq("aktif", true);
+
+        // Check if this exact assignment already exists
+        const { data: existingKs } = await supabase
+          .from("kelas_siswa")
+          .select("id")
+          .eq("siswa_id", values.id)
+          .eq("kelas_id", values.kelas_siswa.kelas_id)
+          .eq("tahun_ajaran_id", values.kelas_siswa.tahun_ajaran_id)
+          .maybeSingle();
+
+        if (existingKs) {
+          const { error } = await supabase
+            .from("kelas_siswa")
+            .update({ aktif: true } as any)
+            .eq("id", existingKs.id);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from("kelas_siswa")
+            .insert({
+              siswa_id: values.id,
+              kelas_id: values.kelas_siswa.kelas_id,
+              tahun_ajaran_id: values.kelas_siswa.tahun_ajaran_id,
+              aktif: true,
+            } as any);
           if (error) throw error;
         }
       }
