@@ -23,6 +23,55 @@ const JENIS_UJIAN = ["Ulangan Harian", "UTS", "UAS", "Tugas", "Praktik"];
 const nilaiHuruf = (n: number) => n >= 90 ? "A" : n >= 80 ? "B" : n >= 70 ? "C" : n >= 60 ? "D" : "E";
 const nilaiColor = (n: number) => n >= 80 ? "text-emerald-600" : n >= 70 ? "text-yellow-600" : "text-red-600";
 
+function exportNilaiExcel(siswaData: any[], nilaiMap: Record<string, { nilai: string; keterangan: string }>, jenisUjian: string) {
+  const rows = siswaData.map((s: any) => ({
+    NIS: s.nis || "",
+    Nama: s.nama,
+    Nilai: nilaiMap[s.id]?.nilai || "",
+    Keterangan: nilaiMap[s.id]?.keterangan || "",
+  }));
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, jenisUjian || "Nilai");
+  XLSX.writeFile(wb, `nilai-${jenisUjian || "export"}.xlsx`);
+}
+
+function importNilaiExcel(
+  file: File,
+  siswaData: any[],
+  setNilaiMap: React.Dispatch<React.SetStateAction<Record<string, { nilai: string; keterangan: string }>>>
+) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const data = new Uint8Array(e.target?.result as ArrayBuffer);
+    const wb = XLSX.read(data, { type: "array" });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows: any[] = XLSX.utils.sheet_to_json(ws);
+
+    const nisByName = new Map<string, string>();
+    const nisByNis = new Map<string, string>();
+    siswaData.forEach((s: any) => {
+      nisByName.set(s.nama.toLowerCase(), s.id);
+      if (s.nis) nisByNis.set(s.nis, s.id);
+    });
+
+    let matched = 0;
+    setNilaiMap((prev) => {
+      const next = { ...prev };
+      rows.forEach((row) => {
+        const id = (row.NIS && nisByNis.get(String(row.NIS))) || nisByName.get(String(row.Nama || "").toLowerCase());
+        if (id && row.Nilai != null) {
+          next[id] = { nilai: String(row.Nilai), keterangan: row.Keterangan || next[id]?.keterangan || "" };
+          matched++;
+        }
+      });
+      return next;
+    });
+    toast.success(`${matched} nilai berhasil diimport dari Excel`);
+  };
+  reader.readAsArrayBuffer(file);
+}
+
 export default function Penilaian() {
   return (
     <div className="space-y-6 animate-fade-in">
