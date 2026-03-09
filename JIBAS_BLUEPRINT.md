@@ -962,23 +962,23 @@ Tabel ini adalah **backlog lengkap** fitur dari JIBAS 32.0 yang perlu diimplemen
 
 | Fitur | Modul PHP | Status |
 |---|---|---|
-| Jadwal pelajaran per kelas | `jadwal/jadwal_kelas_*.php` | ❌ Belum |
-| Jadwal mengajar guru | `jadwal/jadwal_guru_*.php` | ❌ Belum |
-| Presensi harian siswa | `presensi/input_presensi_*.php` | ❌ Belum |
-| Presensi per pelajaran (KBM) | `presensi/presensikeg.siswa2.*.php` | ❌ Belum |
-| Rekap absensi siswa | `presensi/lap_*.php` | ❌ Belum |
-| Input nilai per ujian | `penilaian/formpenilaian.php` | ❌ Belum |
-| Import nilai dari Excel | `penilaian/impnilai.php` | ❌ Belum |
-| Export nilai ke Excel | `penilaian/expnilai.php` | ❌ Belum |
-| Hitung nilai akhir | `penilaian/hitung_nilai_akhir.php` | ❌ Belum |
-| Cetak rapor (Word/HTML) | `penilaian/cetak_rapor_kelas.php` | ❌ Belum |
-| Legger nilai per kelas | `penilaian/legger.kelas.php` | ❌ Belum |
-| Komentar rapor | `penilaian/komentar.*.php` | ❌ Belum |
-| RPP (Rencana Pelaksanaan Pembelajaran) | `penilaian/rpp.php` | ❌ Belum |
-| Kalender akademik | `jadwal/kalender_*.php` | ❌ Belum |
-| Statistik siswa (grafik) | `siswa/statistik_*.php` | ❌ Belum |
-| Data alumni | `siswa/alumni_*.php` | ❌ Belum |
-| PSB — lengkap dengan pembayaran | `siswa_baru/` | ⚠️ Partial |
+| Jadwal pelajaran per kelas | `jadwal/jadwal_kelas_*.php` | ✅ Selesai (`JadwalPelajaran.tsx`) |
+| Jadwal mengajar guru | `jadwal/jadwal_guru_*.php` | ✅ Selesai (`JadwalPegawai.tsx`) |
+| Presensi harian siswa | `presensi/input_presensi_*.php` | ✅ Selesai (`PresensiSiswa.tsx`) |
+| Presensi per pelajaran (KBM) | `presensi/presensikeg.siswa2.*.php` | ✅ Selesai (`PresensiKBM.tsx`) |
+| Rekap absensi siswa | `presensi/lap_*.php` | ✅ Selesai (via `PresensiSiswa.tsx`) |
+| Input nilai per ujian | `penilaian/formpenilaian.php` | ✅ Selesai (`Penilaian.tsx`) |
+| Import nilai dari Excel | `penilaian/impnilai.php` | ⚠️ Partial |
+| Export nilai ke Excel | `penilaian/expnilai.php` | ✅ Selesai (via `ExportButton.tsx`) |
+| Hitung nilai akhir | `penilaian/hitung_nilai_akhir.php` | ✅ Selesai (edge function `hitung-nilai-akhir`) |
+| Cetak rapor (Word/HTML) | `penilaian/cetak_rapor_kelas.php` | ✅ Selesai (`CetakRapor.tsx`) |
+| Legger nilai per kelas | `penilaian/legger.kelas.php` | ✅ Selesai (`LeggerNilai.tsx`) |
+| Komentar rapor | `penilaian/komentar.*.php` | ✅ Selesai (`KomentarRapor.tsx`) |
+| RPP (Rencana Pelaksanaan Pembelajaran) | `penilaian/rpp.php` | ✅ Selesai (`RPP.tsx`) |
+| Kalender akademik | `jadwal/kalender_*.php` | ✅ Selesai (`KalenderAkademik.tsx`) |
+| Statistik siswa (grafik) | `siswa/statistik_*.php` | ✅ Selesai (`StatistikSiswa.tsx`) |
+| Data alumni | `siswa/alumni_*.php` | ✅ Selesai (`DataAlumni.tsx`) |
+| PSB — lengkap dengan pembayaran | `siswa_baru/` | ✅ Selesai (`PSB.tsx` + `PembayaranPSB.tsx`) |
 
 ### Keuangan
 
