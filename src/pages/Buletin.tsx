@@ -191,6 +191,14 @@ export default function Buletin() {
                       ) : (
                         <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{a.konten}</p>
                       )}
+                      {a.lampiran_url && (
+                        <div className="flex items-center gap-1 mt-2" onClick={e => e.stopPropagation()}>
+                          <Paperclip className="h-3 w-3 text-muted-foreground" />
+                          <button className="text-xs text-primary hover:underline" onClick={() => downloadLampiran(a.lampiran_url, a.lampiran_nama || "lampiran")}>
+                            {a.lampiran_nama || "Unduh Lampiran"}
+                          </button>
+                        </div>
+                      )}
                       <p className="text-xs text-muted-foreground mt-2">Oleh: {a.penulis?.email || "-"}</p>
                     </div>
                     {canEdit && (
