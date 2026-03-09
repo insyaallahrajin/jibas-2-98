@@ -38,7 +38,7 @@ export default function LaporanBayarSiswa() {
     queryKey: ["laporan_bayar_siswa", selectedSiswa?.id, filterTaId],
     enabled: !!selectedSiswa,
     queryFn: async () => {
-      let q = supabase.from("pembayaran").select("*, jenis_pembayaran:jenis_id(nama), tahun_ajaran:tahun_ajaran_id(nama)").eq("siswa_id", selectedSiswa.id).order("tanggal_bayar", { ascending: false });
+      let q = supabase.from("pembayaran").select("*, jenis_pembayaran:jenis_id(nama, tipe), tahun_ajaran:tahun_ajaran_id(nama)").eq("siswa_id", selectedSiswa.id).order("tanggal_bayar", { ascending: false });
       if (filterTaId && filterTaId !== "all") q = q.eq("tahun_ajaran_id", filterTaId);
       const { data, error } = await q;
       if (error) throw error;

@@ -26,11 +26,14 @@ export default function LaporanBayarKelas() {
     },
   });
 
+  // Detect if selected jenis is sekali bayar
+  const selectedJenis = jenisList?.find((j: any) => j.id === jenisId);
+  const isSekali = (selectedJenis as any)?.tipe === "sekali";
+
   const { data: reportData, isLoading } = useQuery({
     queryKey: ["laporan_bayar_kelas", kelasId, jenisId],
     enabled: !!kelasId && !!jenisId,
     queryFn: async () => {
-      // Get students in class
       const { data: kelasSiswa } = await supabase
         .from("kelas_siswa")
         .select("siswa:siswa_id(id, nama, nis)")
@@ -41,35 +44,48 @@ export default function LaporanBayarKelas() {
 
       const siswaIds = kelasSiswa.map((ks: any) => ks.siswa?.id).filter(Boolean);
 
-      // Get payments for these students and this jenis
       const { data: payments } = await supabase
         .from("pembayaran")
         .select("siswa_id, bulan, jumlah")
         .eq("jenis_id", jenisId)
         .in("siswa_id", siswaIds);
 
-      // Build report
+      const jenis = jenisList?.find((j: any) => j.id === jenisId);
+      const tipe = (jenis as any)?.tipe || "bulanan";
+
       return kelasSiswa.map((ks: any) => {
         const siswa = ks.siswa;
         const siswaPayments = (payments || []).filter((p: any) => p.siswa_id === siswa.id);
-        const bulanBayar: Record<number, number> = {};
-        siswaPayments.forEach((p: any) => { bulanBayar[p.bulan] = (bulanBayar[p.bulan] || 0) + Number(p.jumlah || 0); });
-        const totalBayar = Object.values(bulanBayar).reduce((s, v) => s + v, 0);
-        const bulanLunas = Object.keys(bulanBayar).length;
+        const totalBayar = siswaPayments.reduce((s: number, p: any) => s + Number(p.jumlah || 0), 0);
 
-        return {
-          id: siswa.id,
-          nama: siswa.nama,
-          nis: siswa.nis || "-",
-          ...Object.fromEntries(Array.from({ length: 12 }, (_, i) => [`b${i + 1}`, bulanBayar[i + 1] || 0])),
-          totalBayar,
-          bulanLunas,
-        };
+        if (tipe === "sekali") {
+          const nominal = Number(jenis?.nominal || 0);
+          return {
+            id: siswa.id,
+            nama: siswa.nama,
+            nis: siswa.nis || "-",
+            totalBayar,
+            lunas: totalBayar >= nominal,
+            sisa: Math.max(nominal - totalBayar, 0),
+          };
+        } else {
+          const bulanBayar: Record<number, number> = {};
+          siswaPayments.forEach((p: any) => { bulanBayar[p.bulan] = (bulanBayar[p.bulan] || 0) + Number(p.jumlah || 0); });
+          const bulanLunas = Object.keys(bulanBayar).length;
+          return {
+            id: siswa.id,
+            nama: siswa.nama,
+            nis: siswa.nis || "-",
+            ...Object.fromEntries(Array.from({ length: 12 }, (_, i) => [`b${i + 1}`, bulanBayar[i + 1] || 0])),
+            totalBayar,
+            bulanLunas,
+          };
+        }
       }).sort((a: any, b: any) => a.nama.localeCompare(b.nama));
     },
   });
 
-  const columns: DataTableColumn<any>[] = [
+  const columnsBulanan: DataTableColumn<any>[] = [
     { key: "nama", label: "Nama Siswa" },
     { key: "nis", label: "NIS" },
     ...Array.from({ length: 12 }, (_, i) => ({
@@ -82,6 +98,19 @@ export default function LaporanBayarKelas() {
     { key: "bulanLunas", label: "Lunas" },
     { key: "totalBayar", label: "Total", render: (v: any) => formatRupiah(Number(v)) },
   ];
+
+  const columnsSekali: DataTableColumn<any>[] = [
+    { key: "nama", label: "Nama Siswa" },
+    { key: "nis", label: "NIS" },
+    { key: "lunas", label: "Status", render: (v: any) => v
+      ? <span className="inline-flex items-center gap-1 text-emerald-600"><CheckCircle2 className="h-4 w-4" /> Lunas</span>
+      : <span className="inline-flex items-center gap-1 text-destructive"><XCircle className="h-4 w-4" /> Belum</span>
+    },
+    { key: "totalBayar", label: "Dibayar", render: (v: any) => formatRupiah(Number(v)) },
+    { key: "sisa", label: "Sisa", render: (v: any) => v > 0 ? <span className="text-destructive font-medium">{formatRupiah(Number(v))}</span> : "-" },
+  ];
+
+  const columns = isSekali ? columnsSekali : columnsBulanan;
 
   const kelasNama = kelasList?.find((k: any) => k.id === kelasId)?.nama || "";
   const jenisNama = jenisList?.find((j: any) => j.id === jenisId)?.nama || "";
