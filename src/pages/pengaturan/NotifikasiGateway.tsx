@@ -126,6 +126,10 @@ export default function NotifikasiGateway() {
             <MessageCircle className="h-4 w-4 mr-1.5" />
             Telegram
           </TabsTrigger>
+          <TabsTrigger value="whatsapp">
+            <Phone className="h-4 w-4 mr-1.5" />
+            WhatsApp
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="telegram" className="space-y-4 mt-4">
