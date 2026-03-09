@@ -25,7 +25,7 @@ export function useJenisPembayaran(departemenId?: string) {
     queryFn: async () => {
       let q = supabase
         .from("jenis_pembayaran")
-        .select("id, nama, nominal, keterangan, departemen_id, akun_pendapatan_id")
+        .select("id, nama, nominal, keterangan, departemen_id, akun_pendapatan_id, tipe")
         .eq("aktif", true)
         .order("nama");
       if (departemenId) {
@@ -78,7 +78,7 @@ export function useAllJenisPembayaran() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("jenis_pembayaran")
-        .select("id, nama, nominal, keterangan, aktif, departemen_id, akun_pendapatan_id, departemen:departemen_id(nama, kode), akun_pendapatan:akun_pendapatan_id(id, kode, nama)")
+        .select("id, nama, nominal, keterangan, aktif, departemen_id, akun_pendapatan_id, tipe, departemen:departemen_id(nama, kode), akun_pendapatan:akun_pendapatan_id(id, kode, nama)")
         .order("nama");
       if (error) throw error;
       return (data || []) as any[];
