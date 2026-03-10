@@ -357,12 +357,12 @@ export default function InputPembayaran() {
                       </div>
                     ) : (
                       <div className="text-sm space-y-1">
-                        <p>Nominal: <span className="font-medium">{formatRupiah(Number(selectedJenis?.nominal) || 0)}</span></p>
+                        <p>Nominal: <span className="font-medium">{formatRupiah(tarifNominal || Number(selectedJenis?.nominal) || 0)}</span></p>
                         {pembayaranSekali.totalBayar > 0 && (
                           <p>Sudah dibayar: <span className="font-medium">{formatRupiah(pembayaranSekali.totalBayar)}</span></p>
                         )}
                         <p className="text-destructive font-medium">
-                          Sisa: {formatRupiah((Number(selectedJenis?.nominal) || 0) - pembayaranSekali.totalBayar)}
+                          Sisa: {formatRupiah((tarifNominal || Number(selectedJenis?.nominal) || 0) - pembayaranSekali.totalBayar)}
                         </p>
                       </div>
                     )}
