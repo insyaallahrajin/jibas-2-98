@@ -12,6 +12,7 @@ import { StatusBadge } from "@/components/shared/StatusBadge";
 import { DataTable, DataTableColumn } from "@/components/shared/DataTable";
 import { supabase } from "@/integrations/supabase/client";
 import { useJenisPembayaran, usePembayaranBySiswa, useCreatePembayaran, useLembaga, formatRupiah, terbilang, namaBulan } from "@/hooks/useKeuangan";
+import { useTarifSiswa } from "@/hooks/useTarifTagihan";
 import { usePengaturanAkun } from "@/hooks/useJurnal";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
