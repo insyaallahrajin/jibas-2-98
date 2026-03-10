@@ -98,6 +98,13 @@ export default function InputPembayaran() {
   const sudahBayar = bulanDibayar ? Array.from({ length: 12 }, (_, i) => bulanDibayar.has(i + 1)).filter(Boolean).length : 0;
   const belumBayar = bulanDibayar ? 12 - sudahBayar : 0;
 
+  // Auto-set jumlah when tarif loads
+  useEffect(() => {
+    if (tarifNominal != null && jenisId) {
+      setJumlah(String(tarifNominal));
+    }
+  }, [tarifNominal, jenisId]);
+
   const handleSelectSiswa = (s: any) => {
     setSelectedSiswa(s);
     setSearchTerm("");
