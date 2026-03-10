@@ -41,6 +41,7 @@ export default function ReferensiKeuangan() {
           <TabsTrigger value="akun">Akun Rekening</TabsTrigger>
           <TabsTrigger value="pengaturan-akun">Pengaturan Akun</TabsTrigger>
           <TabsTrigger value="tahun-buku">Tahun Buku</TabsTrigger>
+          <TabsTrigger value="tarif">Tarif Tagihan</TabsTrigger>
           <TabsTrigger value="template">Template Nomor</TabsTrigger>
         </TabsList>
         <TabsContent value="penerimaan"><TabJenisPembayaran /></TabsContent>
