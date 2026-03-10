@@ -242,8 +242,8 @@ export default function PortalTagihan() {
                           <span className="text-sm font-medium">
                             {t.jenis_nama}
                           </span>
-                          <span className="text-xs text-muted-foreground ml-2">
-                            {NAMA_BULAN[t.bulan]}
+                        <span className="text-xs text-muted-foreground ml-2">
+                            {t.bulan === 0 ? "Sekali Bayar" : NAMA_BULAN[t.bulan]}
                           </span>
                         </div>
                         <span className="text-sm font-semibold">
