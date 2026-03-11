@@ -108,8 +108,44 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 5. Hitung total
-    const totalAmount = items.reduce((sum, item) => sum + item.jumlah, 0);
+    // 5. Re-fetch nominal dari database (JANGAN percaya frontend)
+    // Ambil kelas_siswa aktif untuk setiap siswa
+    const { data: kelasSiswaData } = await supabase
+      .from("kelas_siswa")
+      .select("siswa_id, kelas_id, tahun_ajaran_id")
+      .in("siswa_id", siswaIds)
+      .eq("aktif", true);
+
+    const kelasMap = new Map<string, { kelas_id: string | null; tahun_ajaran_id: string | null }>();
+    (kelasSiswaData || []).forEach((ks: any) => {
+      kelasMap.set(ks.siswa_id, { kelas_id: ks.kelas_id, tahun_ajaran_id: ks.tahun_ajaran_id });
+    });
+
+    // Hitung nominal dari DB untuk setiap item
+    const validatedItems = [];
+    for (const item of items) {
+      const kelasInfo = kelasMap.get(item.siswa_id);
+      const { data: tarifNominal } = await supabase.rpc("get_tarif_siswa", {
+        p_jenis_id: item.jenis_id,
+        p_siswa_id: item.siswa_id,
+        p_kelas_id: kelasInfo?.kelas_id || null,
+        p_tahun_ajaran_id: kelasInfo?.tahun_ajaran_id || item.tahun_ajaran_id || null,
+      });
+
+      const nominalDB = Number(tarifNominal) || 0;
+      if (nominalDB <= 0) {
+        throw new Error(`Tarif tidak ditemukan untuk ${item.jenis_nama} - ${item.nama_siswa}`);
+      }
+
+      validatedItems.push({
+        ...item,
+        jumlah: nominalDB, // Override dengan nominal dari DB
+        departemen_id: item.departemen_id || null,
+        tahun_ajaran_id: kelasInfo?.tahun_ajaran_id || item.tahun_ajaran_id || null,
+      });
+    }
+
+    const totalAmount = validatedItems.reduce((sum, item) => sum + item.jumlah, 0);
 
     // 6. Generate order_id unik
     const now = new Date();
