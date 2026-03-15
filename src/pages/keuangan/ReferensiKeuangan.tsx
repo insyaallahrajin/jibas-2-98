@@ -18,7 +18,7 @@ import {
   useTahunAjaran, useCreateTahunAjaran, useUpdateTahunAjaran, useDeleteTahunAjaran, useAktifkanTahunAjaran,
   useLembaga, formatRupiah,
 } from "@/hooks/useKeuangan";
-import { useAllAkunRekening, useCreateAkunRekening, useUpdateAkunRekening, useDeleteAkunRekening, useAkunByJenis, usePengaturanAkun, useUpdatePengaturanAkun } from "@/hooks/useJurnal";
+import { useAllAkunRekening, useCreateAkunRekening, useUpdateAkunRekening, useDeleteAkunRekening, useAkunByJenis, usePengaturanAkun, useUpdatePengaturanAkun, useCreatePengaturanAkun, useDeletePengaturanAkun } from "@/hooks/useJurnal";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Pencil, Trash2, AlertTriangle, Save, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";

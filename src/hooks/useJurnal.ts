@@ -299,6 +299,36 @@ export function useUpdatePengaturanAkun() {
   });
 }
 
+export function useCreatePengaturanAkun() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (values: { kode_setting: string; label: string; keterangan?: string; akun_id?: string | null }) => {
+      const { error } = await supabase.from("pengaturan_akun").insert(values);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["pengaturan_akun"] });
+      toast.success("Setting akun berhasil ditambahkan");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+}
+
+export function useDeletePengaturanAkun() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("pengaturan_akun").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["pengaturan_akun"] });
+      toast.success("Setting akun berhasil dihapus");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+}
+
 // ─── Akun by Jenis ───
 export function useAkunByJenis(jenis: string) {
   return useQuery({
