@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Bell, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -7,6 +8,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 const roleLabels: Record<string, string> = {
   admin: "Administrator",
@@ -21,6 +23,13 @@ const roleLabels: Record<string, string> = {
 export function TopNavbar() {
   const { user, role, signOut } = useAuth();
   const navigate = useNavigate();
+  const [namaSekolah, setNamaSekolah] = useState("");
+
+  useEffect(() => {
+    supabase.from("sekolah").select("nama").maybeSingle().then(({ data }) => {
+      if (data?.nama) setNamaSekolah(data.nama);
+    });
+  }, []);
 
   const handleLogout = async () => {
     await signOut();
@@ -32,7 +41,7 @@ export function TopNavbar() {
       <SidebarTrigger className="-ml-1" />
 
       <div className="flex-1">
-        <h2 className="text-sm font-semibold text-foreground">SMA Negeri 1 Contoh</h2>
+        <h2 className="text-sm font-semibold text-foreground">{namaSekolah || "Sistem Manajemen Sekolah"}</h2>
         <p className="text-[11px] text-muted-foreground leading-tight">Tahun Ajaran 2025/2026</p>
       </div>
 
