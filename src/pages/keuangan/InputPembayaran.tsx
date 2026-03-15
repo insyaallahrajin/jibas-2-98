@@ -334,6 +334,9 @@ export default function InputPembayaran() {
                   {tarifNominal != null && tarifNominal !== Number(selectedJenis?.nominal || 0) && (
                     <p className="text-xs text-primary mt-1">⚡ Tarif khusus siswa ini: {formatRupiah(tarifNominal)}</p>
                   )}
+                  {existingTagihan && existingTagihan.status === "belum_bayar" && (
+                    <p className="text-xs text-amber-600 mt-1">📋 Tagihan piutang ditemukan ({formatRupiah(Number(existingTagihan.nominal))}) — jurnal akan mengkredit Piutang</p>
+                  )}
                 </div>
 
                 {/* Grid 12 bulan - hanya untuk tipe bulanan */}
