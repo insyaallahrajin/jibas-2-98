@@ -39,7 +39,14 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { tahun_ajaran_id, jenis_id, bulan, departemen_id } = body;
+    const { tahun_ajaran_id, jenis_id, bulan, bulan_list, departemen_id } = body;
+
+    // Support both single bulan and bulan_list (array)
+    const bulanArray: (number | null)[] = bulan_list && Array.isArray(bulan_list) && bulan_list.length > 0
+      ? bulan_list
+      : bulan != null
+        ? [bulan]
+        : [null]; // null = tipe sekali (no month)
 
     if (!tahun_ajaran_id || !jenis_id) {
       throw new Error("tahun_ajaran_id dan jenis_id wajib diisi");
@@ -92,50 +99,36 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Check existing tagihan to avoid duplicates
-    let existingQuery = adminClient
-      .from("tagihan")
-      .select("siswa_id")
-      .eq("jenis_id", jenis_id)
-      .eq("tahun_ajaran_id", tahun_ajaran_id);
-
-    if (bulan != null) {
-      existingQuery = existingQuery.eq("bulan", bulan);
-    } else {
-      existingQuery = existingQuery.is("bulan", null);
-    }
-
-    const { data: existingTagihan } = await existingQuery;
-    const existingSet = new Set((existingTagihan || []).map((t) => t.siswa_id));
-
-    // Filter out already-existing
-    const toGenerate = kelasSiswaList.filter((ks) => !existingSet.has(ks.siswa_id));
-
-    if (toGenerate.length === 0) {
-      return new Response(JSON.stringify({
-        success: true,
-        generated: 0,
-        skipped: kelasSiswaList.length,
-        message: "Semua tagihan sudah di-generate sebelumnya",
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Get tarif for each student using the DB function
+    // Process each bulan in the array
     let generated = 0;
+    let skipped = 0;
     const errors: string[] = [];
     const tanggalHariIni = new Date().toISOString().split("T")[0];
     const tahunSekarang = new Date().getFullYear();
 
-    // Process in batches of 50
-    const batchSize = 50;
-    for (let i = 0; i < toGenerate.length; i += batchSize) {
-      const batch = toGenerate.slice(i, i + batchSize);
+    for (const currentBulan of bulanArray) {
+      // Check existing tagihan to avoid duplicates
+      let existingQuery = adminClient
+        .from("tagihan")
+        .select("siswa_id")
+        .eq("jenis_id", jenis_id)
+        .eq("tahun_ajaran_id", tahun_ajaran_id);
 
-      for (const ks of batch) {
+      if (currentBulan != null) {
+        existingQuery = existingQuery.eq("bulan", currentBulan);
+      } else {
+        existingQuery = existingQuery.is("bulan", null);
+      }
+
+      const { data: existingTagihan } = await existingQuery;
+      const existingSet = new Set((existingTagihan || []).map((t) => t.siswa_id));
+      skipped += existingSet.size;
+
+      const toGenerate = kelasSiswaList.filter((ks) => !existingSet.has(ks.siswa_id));
+      if (toGenerate.length === 0) continue;
+
+      for (const ks of toGenerate) {
         try {
-          // Get tarif for this student
           const { data: nominal } = await adminClient.rpc("get_tarif_siswa", {
             p_jenis_id: jenis_id,
             p_siswa_id: ks.siswa_id,
@@ -146,8 +139,7 @@ Deno.serve(async (req) => {
           const tarifNominal = Number(nominal) || Number(jenis.nominal) || 0;
           if (tarifNominal <= 0) continue;
 
-          // Create piutang journal
-          const bulanLabel = bulan ? `-B${bulan}` : "";
+          const bulanLabel = currentBulan ? `-B${currentBulan}` : "";
           const { data: nomorJurnal } = await adminClient.rpc("generate_nomor_jurnal", {
             p_prefix: "JPI",
             p_tahun: tahunSekarang,
@@ -168,11 +160,10 @@ Deno.serve(async (req) => {
             .single();
 
           if (jErr || !jurnal) {
-            errors.push(`Jurnal gagal untuk siswa ${ks.siswa_id}`);
+            errors.push(`Jurnal gagal untuk siswa ${ks.siswa_id} bulan ${currentBulan}`);
             continue;
           }
 
-          // Journal details: Debit Piutang | Credit Pendapatan
           await adminClient.from("jurnal_detail").insert([
             {
               jurnal_id: jurnal.id,
@@ -192,13 +183,12 @@ Deno.serve(async (req) => {
             },
           ]);
 
-          // Create tagihan record
           const { error: tagErr } = await adminClient.from("tagihan").insert({
             siswa_id: ks.siswa_id,
             jenis_id: jenis_id,
             tahun_ajaran_id: tahun_ajaran_id,
             kelas_id: ks.kelas_id,
-            bulan: bulan || null,
+            bulan: currentBulan || null,
             nominal: tarifNominal,
             status: "belum_bayar",
             jurnal_piutang_id: jurnal.id,
@@ -206,8 +196,7 @@ Deno.serve(async (req) => {
           });
 
           if (tagErr) {
-            // Unique constraint violation = already exists, skip
-            if (tagErr.code === "23505") continue;
+            if (tagErr.code === "23505") { skipped++; continue; }
             errors.push(`Tagihan gagal untuk siswa ${ks.siswa_id}: ${tagErr.message}`);
             continue;
           }
@@ -222,8 +211,9 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({
       success: true,
       generated,
-      skipped: existingSet.size,
+      skipped,
       total_siswa: kelasSiswaList.length,
+      bulan_count: bulanArray.filter((b) => b !== null).length || 1,
       errors: errors.length > 0 ? errors.slice(0, 10) : undefined,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

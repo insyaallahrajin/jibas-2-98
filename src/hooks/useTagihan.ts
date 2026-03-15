@@ -61,6 +61,7 @@ export function useGenerateTagihan() {
       tahun_ajaran_id: string;
       jenis_id: string;
       bulan?: number;
+      bulan_list?: number[];
       departemen_id?: string;
     }) => {
       const { data, error } = await supabase.functions.invoke("generate-tagihan", {
@@ -73,7 +74,7 @@ export function useGenerateTagihan() {
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ["tagihan"] });
       qc.invalidateQueries({ queryKey: ["jurnal"] });
-      toast.success(`Tagihan berhasil di-generate: ${data.generated} siswa baru, ${data.skipped} sudah ada`);
+      toast.success(`Tagihan berhasil di-generate: ${data.generated} tagihan baru, ${data.skipped} sudah ada`);
     },
     onError: (e: any) => toast.error(e.message),
   });
