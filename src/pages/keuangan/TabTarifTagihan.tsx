@@ -115,7 +115,7 @@ export default function TabTarifTagihan() {
   };
 
   const openEdit = (item: any) => {
-    setEditItem(item); setJenisId(item.jenis_id); setSiswaId(item.siswa_id || ""); setKelasId(item.kelas_id || ""); setTahunAjaranId(item.tahun_ajaran_id || "");
+    setEditItem(item); setJenisId(item.jenis_id); setSiswaId(item.siswa_id || ""); setDeptId(item.kelas?.departemen_id || ""); setKelasId(item.kelas_id || ""); setTahunAjaranId(item.tahun_ajaran_id || "");
     setNominal(String(item.nominal || "")); setKeterangan(item.keterangan || ""); setSiswaSearch(item.siswa ? `${item.siswa.nama} (${item.siswa.nis || '-'})` : "");
     setAutoGenerate(false); setGenBulanList([]); setGenDeptId("");
     setDialogOpen(true);
