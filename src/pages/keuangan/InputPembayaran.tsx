@@ -117,8 +117,22 @@ export default function InputPembayaran() {
     setSearchTerm("");
   };
 
+  const effectiveTarif = tarifNominal ?? Number(selectedJenis?.nominal) ?? 0;
+  const isJumlahLocked = tarifNominal != null || selectedJenis?.nominal != null;
+
   const handleSubmit = async () => {
     if (!selectedSiswa || !jenisId || !jumlah) return;
+
+    // Validasi: jumlah harus sesuai tarif
+    if (isJumlahLocked && Number(jumlah) !== effectiveTarif) {
+      toast.error(`Jumlah harus sesuai tarif: ${formatRupiah(effectiveTarif)}`);
+      return;
+    }
+
+    if (!tahunAktif?.id) {
+      toast.error("Tahun ajaran aktif belum dikonfigurasi. Pembayaran tidak dapat disimpan.");
+      return;
+    }
 
     // A. Validasi akun tersedia
     const kasAkunId = pengaturanAkun?.find((p: any) => p.kode_setting === "kas_tunai")?.akun?.id;
