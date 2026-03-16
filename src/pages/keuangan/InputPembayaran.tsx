@@ -68,7 +68,7 @@ export default function InputPembayaran() {
   const tagihanBulanToCheck = isSekali ? undefined : Number(bulan);
   const { data: existingTagihan } = useTagihanBySiswa(selectedSiswa?.id, jenisId || undefined, tagihanBulanToCheck);
 
-  const { data: tarifNominal } = useTarifSiswa(jenisId || undefined, selectedSiswa?.id, siswaKelasId);
+  const { data: tarifNominal } = useTarifSiswa(jenisId || undefined, selectedSiswa?.id, siswaKelasId, tahunAktif?.id);
 
   // Auto-detect tunggakan: cek bulan yang sudah dibayar (untuk tipe bulanan)
   const { data: bulanDibayar } = useQuery({
