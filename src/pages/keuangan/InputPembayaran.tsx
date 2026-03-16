@@ -143,6 +143,7 @@ export default function InputPembayaran() {
       tanggal_bayar: tanggalBayar,
       keterangan: keterangan || undefined,
       departemen_id: departemenId || undefined,
+      tahun_ajaran_id: tahunAktif?.id || undefined,
     });
 
     // C. Auto-jurnal
