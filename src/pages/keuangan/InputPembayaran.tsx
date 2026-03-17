@@ -461,7 +461,7 @@ export default function InputPembayaran() {
                 </div>
                 <Button
                   onClick={handleSubmit}
-                  disabled={!jenisId || !jumlah || createMutation.isPending || (isSekali && pembayaranSekali?.lunas)}
+                  disabled={!jenisId || !jumlah || !!tarifTidakAda || createMutation.isPending || (isSekali && pembayaranSekali?.lunas)}
                   className="w-full"
                 >
                   {createMutation.isPending ? "Menyimpan..." : "Simpan & Cetak Kuitansi"}
