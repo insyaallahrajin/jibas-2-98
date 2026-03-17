@@ -107,8 +107,7 @@ export default function InputPembayaran() {
   const selectedJenis = jenisList?.find((j: any) => j.id === jenisId);
   const isSekali = selectedJenis?.tipe === "sekali";
 
-  // Get kelas_id of the selected student for tarif lookup
-  const siswaKelasId = selectedSiswa?.kelas_siswa?.[0]?.kelas?.id;
+  // Check if there's an existing tagihan (piutang) for this student+jenis+bulan
   // Check if there's an existing tagihan (piutang) for this student+jenis+bulan
   const tagihanBulanToCheck = isSekali ? undefined : Number(bulan);
   const { data: existingTagihan } = useTagihanBySiswa(selectedSiswa?.id, jenisId || undefined, tagihanBulanToCheck);
