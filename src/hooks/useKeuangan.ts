@@ -2,6 +2,20 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+// ─── Period Lock Check ───
+async function checkPeriodeLocked(tanggal: string): Promise<void> {
+  const { data } = await supabase
+    .from("tahun_ajaran")
+    .select("id, nama, ditutup, tanggal_mulai, tanggal_selesai")
+    .lte("tanggal_mulai", tanggal)
+    .gte("tanggal_selesai", tanggal)
+    .limit(1);
+  const locked = (data || []).find((d: any) => d.ditutup === true);
+  if (locked) {
+    throw new Error(`Transaksi ditolak: periode "${(locked as any).nama}" sudah ditutup buku.`);
+  }
+}
+
 // ─── LEMBAGA (Departemen) ───
 export function useLembaga() {
   return useQuery({
