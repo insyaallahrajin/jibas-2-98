@@ -405,6 +405,24 @@ export default function InputPembayaran() {
             </SelectContent>
           </Select>
         </div>
+        <div className="shrink-0">
+          <Select value={selectedTahunAjaranId || tahunAktif?.id || ""} onValueChange={setSelectedTahunAjaranId}>
+            <SelectTrigger className="w-48 h-11">
+              <SelectValue placeholder="Tahun Ajaran" />
+            </SelectTrigger>
+            <SelectContent>
+              {tahunAjaranList && tahunAjaranList.filter((t: any) => !t.ditutup).length > 0 ? (
+                tahunAjaranList.filter((t: any) => !t.ditutup).map((t: any) => (
+                  <SelectItem key={t.id} value={t.id}>
+                    {t.nama} {t.aktif ? "(Aktif)" : ""}
+                  </SelectItem>
+                ))
+              ) : (
+                <SelectItem value="__none__" disabled>Tidak ada tahun ajaran</SelectItem>
+              )}
+            </SelectContent>
+          </Select>
+        </div>
         {selectedSiswa && (
           <Button variant="ghost" size="icon" className="h-11 w-11 shrink-0" onClick={() => { setSelectedSiswa(null); setJenisId(""); }}>
             <X className="h-4 w-4" />
