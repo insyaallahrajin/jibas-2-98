@@ -96,9 +96,9 @@ export default function InputPembayaran() {
         .eq("siswa_id", selectedSiswa.id)
         .eq("jenis_id", jenisId);
       if (error) throw error;
-      const effectiveNominal = tarifNominal || Number(selectedJenis?.nominal) || 0;
+      const effectiveNominal = tarifNominal || 0;
       const totalBayar = (data || []).reduce((sum, r) => sum + (Number(r.jumlah) || 0), 0);
-      return { totalBayar, lunas: totalBayar >= effectiveNominal };
+      return { totalBayar, lunas: effectiveNominal > 0 && totalBayar >= effectiveNominal };
     },
   });
 
@@ -117,12 +117,13 @@ export default function InputPembayaran() {
     setSearchTerm("");
   };
 
-  const effectiveTarif = tarifNominal ?? Number(selectedJenis?.nominal) ?? 0;
+  const tarifTidakAda = jenisId && selectedSiswa && tarifNominal == null;
+  const effectiveTarif = tarifNominal ?? 0;
   // Only lock amount for bulanan types; sekali bayar allows partial/installment payments
-  const isJumlahLocked = !isSekali && (tarifNominal != null || selectedJenis?.nominal != null);
+  const isJumlahLocked = !isSekali && tarifNominal != null;
 
   const handleSubmit = async () => {
-    if (!selectedSiswa || !jenisId || !jumlah) return;
+    if (!selectedSiswa || !jenisId || !jumlah || tarifTidakAda) return;
 
     // Validasi: untuk tipe bulanan, jumlah harus sesuai tarif
     if (!isSekali && isJumlahLocked && Number(jumlah) !== effectiveTarif) {
@@ -349,19 +350,20 @@ export default function InputPembayaran() {
                   <Label>Jenis Pembayaran</Label>
                   <Select value={jenisId} onValueChange={(v) => {
                     setJenisId(v);
-                    // Will set jumlah once tarifNominal loads via effect below
-                    const j = jenisList?.find((x: any) => x.id === v);
-                    if (j?.nominal) setJumlah(String(j.nominal));
+                    setJumlah("");
                   }}>
                     <SelectTrigger><SelectValue placeholder="Pilih jenis" /></SelectTrigger>
                     <SelectContent>
                       {jenisList?.map((j: any) => (
-                        <SelectItem key={j.id} value={j.id}>{j.nama} {j.nominal ? `(${formatRupiah(Number(j.nominal))})` : ""}</SelectItem>
+                        <SelectItem key={j.id} value={j.id}>{j.nama}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  {tarifNominal != null && tarifNominal !== Number(selectedJenis?.nominal || 0) && (
-                    <p className="text-xs text-primary mt-1">⚡ Tarif khusus siswa ini: {formatRupiah(tarifNominal)}</p>
+                  {tarifNominal != null && (
+                    <p className="text-xs text-primary mt-1">⚡ Tarif siswa ini: {formatRupiah(tarifNominal)}</p>
+                  )}
+                  {tarifTidakAda && (
+                    <p className="text-xs text-destructive mt-1 font-medium">⚠️ Tarif belum dikonfigurasi untuk siswa ini. Pembayaran tidak dapat dilakukan.</p>
                   )}
                   {existingTagihan && existingTagihan.status === "belum_bayar" && (
                     <p className="text-xs text-amber-600 mt-1">📋 Tagihan piutang ditemukan ({formatRupiah(Number(existingTagihan.nominal))}) — jurnal akan mengkredit Piutang</p>
@@ -369,7 +371,7 @@ export default function InputPembayaran() {
                 </div>
 
                 {/* Grid 12 bulan - hanya untuk tipe bulanan */}
-                {jenisId && !isSekali && bulanDibayar && (
+                {jenisId && !isSekali && !tarifTidakAda && bulanDibayar && (
                   <div className="space-y-3">
                     <Label>Status Pembayaran Per Bulan</Label>
                     <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
@@ -407,7 +409,7 @@ export default function InputPembayaran() {
                 )}
 
                 {/* Status sekali bayar */}
-                {jenisId && isSekali && pembayaranSekali && (
+                {jenisId && isSekali && !tarifTidakAda && pembayaranSekali && (
                   <div className="rounded-lg border p-4 space-y-2">
                     <Label>Status Pembayaran</Label>
                     {pembayaranSekali.lunas ? (
@@ -417,12 +419,12 @@ export default function InputPembayaran() {
                       </div>
                     ) : (
                       <div className="text-sm space-y-1">
-                        <p>Nominal: <span className="font-medium">{formatRupiah(tarifNominal || Number(selectedJenis?.nominal) || 0)}</span></p>
+                        <p>Nominal: <span className="font-medium">{formatRupiah(effectiveTarif)}</span></p>
                         {pembayaranSekali.totalBayar > 0 && (
                           <p>Sudah dibayar: <span className="font-medium">{formatRupiah(pembayaranSekali.totalBayar)}</span></p>
                         )}
                         <p className="text-destructive font-medium">
-                          Sisa: {formatRupiah((tarifNominal || Number(selectedJenis?.nominal) || 0) - pembayaranSekali.totalBayar)}
+                          Sisa: {formatRupiah(effectiveTarif - pembayaranSekali.totalBayar)}
                         </p>
                       </div>
                     )}
@@ -459,7 +461,7 @@ export default function InputPembayaran() {
                 </div>
                 <Button
                   onClick={handleSubmit}
-                  disabled={!jenisId || !jumlah || createMutation.isPending || (isSekali && pembayaranSekali?.lunas)}
+                  disabled={!jenisId || !jumlah || !!tarifTidakAda || createMutation.isPending || (isSekali && pembayaranSekali?.lunas)}
                   className="w-full"
                 >
                   {createMutation.isPending ? "Menyimpan..." : "Simpan & Cetak Kuitansi"}
