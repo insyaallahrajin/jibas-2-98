@@ -298,6 +298,21 @@ export default function InputPembayaran() {
             .from("pembayaran")
             .update({ jurnal_id: jurnal.id })
             .eq("id", result.id);
+
+          // If dimuka, record in pendapatan_dimuka table
+          if (isBayarDimuka) {
+            await supabase.from("pendapatan_dimuka").insert({
+              pembayaran_id: result.id,
+              siswa_id: selectedSiswa.id,
+              jenis_id: jenisId,
+              tahun_ajaran_pembayaran_id: tahunAktif!.id,
+              tahun_ajaran_target_id: effectiveTahunAjaranId!,
+              bulan: isSekali ? null : Number(bulan),
+              jumlah: Number(jumlah),
+              status: "pending",
+              departemen_id: departemenId || null,
+            } as any);
+          }
         }
       } catch (jurnalError: any) {
         console.error("Auto-jurnal gagal:", jurnalError);
