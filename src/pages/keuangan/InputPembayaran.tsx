@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { DataTable, DataTableColumn } from "@/components/shared/DataTable";
 import { supabase } from "@/integrations/supabase/client";
-import { useJenisPembayaran, usePembayaranBySiswa, useCreatePembayaran, useLembaga, useTahunAjaranAktif, formatRupiah, terbilang, namaBulan } from "@/hooks/useKeuangan";
+import { useJenisPembayaran, usePembayaranBySiswa, useCreatePembayaran, useLembaga, useTahunAjaranAktif, useTahunAjaran, formatRupiah, terbilang, namaBulan } from "@/hooks/useKeuangan";
 import { useTarifSiswa } from "@/hooks/useTarifTagihan";
 import { usePengaturanAkun } from "@/hooks/useJurnal";
 import { useTagihanBySiswa, useUpdateTagihanLunas } from "@/hooks/useTagihan";
@@ -38,7 +38,11 @@ export default function InputPembayaran() {
 
   const { data: lembagaList } = useLembaga();
   const { data: tahunAktif } = useTahunAjaranAktif();
+  const { data: tahunAjaranList } = useTahunAjaran();
   const { data: allJenisList } = useJenisPembayaran(departemenId || undefined);
+
+  // State for tahun ajaran selection (default: active)
+  const [selectedTahunAjaranId, setSelectedTahunAjaranId] = useState("");
   const { data: riwayat, isLoading: loadRiwayat } = usePembayaranBySiswa(selectedSiswa?.id);
 
   const siswaKelasId = selectedSiswa?.kelas_siswa?.[0]?.kelas?.id;
@@ -151,6 +155,16 @@ export default function InputPembayaran() {
     }
   }, [tarifNominal, jenisId]);
 
+  // Default selectedTahunAjaranId to active
+  useEffect(() => {
+    if (tahunAktif?.id && !selectedTahunAjaranId) {
+      setSelectedTahunAjaranId(tahunAktif.id);
+    }
+  }, [tahunAktif?.id]);
+
+  const effectiveTahunAjaranId = selectedTahunAjaranId || tahunAktif?.id;
+  const isBayarDimuka = !!(tahunAktif?.id && effectiveTahunAjaranId && effectiveTahunAjaranId !== tahunAktif.id);
+
   const handleSelectSiswa = (s: any) => {
     setSelectedSiswa(s);
     setSearchTerm("");
@@ -189,12 +203,32 @@ export default function InputPembayaran() {
     const kasAkunId = pengaturanAkun?.find((p: any) => p.kode_setting === "kas_tunai")?.akun?.id;
     const pendapatanAkunId = selectedJenis?.akun_pendapatan_id;
     const piutangAkunId = pengaturanAkun?.find((p: any) => p.kode_setting === "piutang_siswa")?.akun?.id;
+    const dimukaAkunId = pengaturanAkun?.find((p: any) => p.kode_setting === "AKUN_PENDAPATAN_DIMUKA")?.akun?.id;
 
     const hasPiutang = existingTagihan && existingTagihan.status === "belum_bayar";
-    const kreditAkunId = hasPiutang ? piutangAkunId : pendapatanAkunId;
+
+    // Determine credit account based on payment type
+    let kreditAkunId: string | undefined;
+    let kreditLabel: string;
+    if (isBayarDimuka && dimukaAkunId) {
+      // Future period → credit to Unearned Revenue (Liability)
+      kreditAkunId = dimukaAkunId;
+      kreditLabel = "Pendapatan Diterima di Muka";
+    } else if (hasPiutang) {
+      kreditAkunId = piutangAkunId;
+      kreditLabel = "Piutang";
+    } else {
+      kreditAkunId = pendapatanAkunId;
+      kreditLabel = "Pendapatan";
+    }
+
     const bisaAutoJurnal = kasAkunId && kreditAkunId;
 
     if (!bisaAutoJurnal) {
+      if (isBayarDimuka && !dimukaAkunId) {
+        toast.error("Akun Pendapatan Diterima di Muka belum dikonfigurasi di Pengaturan Akun. Silakan atur terlebih dahulu.");
+        return;
+      }
       toast.warning("Akun jurnal belum dikonfigurasi. Pembayaran tersimpan tanpa jurnal otomatis.");
     }
 
@@ -204,25 +238,26 @@ export default function InputPembayaran() {
       bulan: isSekali ? 0 : Number(bulan),
       jumlah: Number(jumlah),
       tanggal_bayar: tanggalBayar,
-      keterangan: keterangan || undefined,
+      keterangan: isBayarDimuka 
+        ? `[DIMUKA] ${keterangan || ""} - Untuk TA: ${tahunAjaranList?.find((t: any) => t.id === effectiveTahunAjaranId)?.nama || ""}`.trim()
+        : keterangan || undefined,
       departemen_id: departemenId || undefined,
-      tahun_ajaran_id: tahunAktif?.id || undefined,
+      tahun_ajaran_id: effectiveTahunAjaranId || tahunAktif?.id || undefined,
     });
 
     if (bisaAutoJurnal && result?.id) {
       try {
         const tahunPembayaran = new Date(tanggalBayar).getFullYear();
         const { data: nomorJurnal, error: rpcError } = await supabase.rpc("generate_nomor_jurnal", {
-          p_prefix: "JP",
+          p_prefix: isBayarDimuka ? "JD" : "JP",
           p_tahun: tahunPembayaran,
         });
         if (rpcError) throw rpcError;
         if (!nomorJurnal) throw new Error("Gagal mendapatkan nomor jurnal");
 
-        const kreditLabel = hasPiutang ? "Piutang" : "Pendapatan";
         const keteranganJurnal = isSekali
-          ? `Penerimaan ${selectedJenis?.nama} - ${selectedSiswa.nama}`
-          : `Penerimaan ${selectedJenis?.nama} - ${selectedSiswa.nama} (${namaBulan(Number(bulan))})`;
+          ? `Penerimaan ${selectedJenis?.nama} - ${selectedSiswa.nama}${isBayarDimuka ? " (Di Muka)" : ""}`
+          : `Penerimaan ${selectedJenis?.nama} - ${selectedSiswa.nama} (${namaBulan(Number(bulan))})${isBayarDimuka ? " [Di Muka]" : ""}`;
 
         const { data: jurnal, error: jErr } = await supabase
           .from("jurnal")
@@ -263,6 +298,21 @@ export default function InputPembayaran() {
             .from("pembayaran")
             .update({ jurnal_id: jurnal.id })
             .eq("id", result.id);
+
+          // If dimuka, record in pendapatan_dimuka table
+          if (isBayarDimuka) {
+            await supabase.from("pendapatan_dimuka").insert({
+              pembayaran_id: result.id,
+              siswa_id: selectedSiswa.id,
+              jenis_id: jenisId,
+              tahun_ajaran_pembayaran_id: tahunAktif!.id,
+              tahun_ajaran_target_id: effectiveTahunAjaranId!,
+              bulan: isSekali ? null : Number(bulan),
+              jumlah: Number(jumlah),
+              status: "pending",
+              departemen_id: departemenId || null,
+            } as any);
+          }
         }
       } catch (jurnalError: any) {
         console.error("Auto-jurnal gagal:", jurnalError);
@@ -412,6 +462,28 @@ export default function InputPembayaran() {
           {/* Right: Payment form */}
           <div className="rounded-lg border p-4 space-y-4">
             <h4 className="text-sm font-semibold">Input Pembayaran</h4>
+
+            {/* Tahun Ajaran selector */}
+            <div className="space-y-1">
+              <Label className="text-xs">Tahun Ajaran Tagihan</Label>
+              <Select value={selectedTahunAjaranId || tahunAktif?.id || ""} onValueChange={setSelectedTahunAjaranId}>
+                <SelectTrigger className="h-9"><SelectValue placeholder="Pilih tahun ajaran" /></SelectTrigger>
+                <SelectContent>
+                  {tahunAjaranList?.filter((t: any) => !t.ditutup).map((t: any) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.nama} {t.aktif ? "(Aktif)" : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {isBayarDimuka && (
+                <div className="rounded-md bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 p-2 mt-1">
+                  <p className="text-[11px] text-amber-700 dark:text-amber-400 font-medium">
+                    ⚡ Pembayaran Di Muka — Akan dicatat sebagai Pendapatan Diterima di Muka (Liabilitas), dan diakui sebagai pendapatan saat tahun ajaran target dimulai.
+                  </p>
+                </div>
+              )}
+            </div>
 
             {/* Row 1: Jenis + Bulan inline */}
             <div className="grid grid-cols-2 gap-3">

@@ -61,6 +61,7 @@ import LaporanPengeluaran from "./pages/keuangan/LaporanPengeluaran";
 import LaporanPenerimaanLain from "./pages/keuangan/LaporanPenerimaanLain";
 import AuditTrail from "./pages/keuangan/AuditTrail";
 import OnlinePayment from "./pages/keuangan/OnlinePayment";
+import PengakuanPendapatan from "./pages/keuangan/PengakuanPendapatan";
 import ProfilYayasan from "./pages/pengaturan/ProfilYayasan";
 import ManajemenPengguna from "./pages/pengaturan/ManajemenPengguna";
 import ManajemenOrtu from "./pages/pengaturan/ManajemenOrtu";
@@ -155,6 +156,7 @@ const App = () => (
                   <Route path="/keuangan/penerimaan-lain" element={<LaporanPenerimaanLain />} />
                   <Route path="/keuangan/online-payment" element={<OnlinePayment />} />
                   <Route path="/keuangan/audit-trail" element={<AuditTrail />} />
+                  <Route path="/keuangan/pengakuan-pendapatan" element={<PengakuanPendapatan />} />
                 </Route>
                 {/* Kepegawaian */}
                 <Route path="/kepegawaian" element={<Kepegawaian />} />
