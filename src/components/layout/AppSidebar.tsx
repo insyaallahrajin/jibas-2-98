@@ -86,6 +86,7 @@ const menuItems: MenuItem[] = [
       { title: "Jurnal Umum", url: "/keuangan/jurnal", roles: ["admin", "kepala_sekolah", "keuangan"] },
       { title: "Buku Besar", url: "/keuangan/buku-besar", roles: ["admin", "kepala_sekolah", "keuangan"] },
       { title: "Tutup Buku", url: "/keuangan/tutup-buku", roles: ["admin", "kepala_sekolah", "keuangan"] },
+      { title: "Pengakuan Pendapatan", url: "/keuangan/pengakuan-pendapatan", roles: ["admin", "kepala_sekolah", "keuangan"] },
       { title: "Pengaturan", url: "", isGroupLabel: true },
       { title: "Audit Trail", url: "/keuangan/audit-trail", roles: ["admin", "kepala_sekolah", "keuangan"] },
       { title: "Referensi", url: "/keuangan/referensi", roles: ["admin", "kepala_sekolah", "keuangan"] },
